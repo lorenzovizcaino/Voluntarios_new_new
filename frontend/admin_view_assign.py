@@ -63,15 +63,15 @@ def admin_assign(page: ft.Page):
                 print("1")
                 usuarios_disponibles=response.json()
                 for user in usuarios_disponibles:
-                    #response2=requests.get(f"API_URL_TAREAS/{tarea_selecionada_completa['id']}")
-                    #tarea_consulta=response2.json()
-                    #print(f"qqqqqq: {tarea_consulta}")
-                    coordinador_ingresado=tarea_selecionada_completa["coordinador_Asignado"]
+                    response2=requests.get(f"{API_URL_TAREAS}/{tarea_selecionada_completa['id']}")
+                    tarea_consulta=response2.json()
+                    
+                    coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
                     print("2")
                     if tarea_selecionada_completa["coordinador"] and  coordinador_ingresado==False:
                         print("3")
                         
-                        requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",json={"coordinador_Asignado": True})
+                        requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": True})
                         usuarios.append(user["user_id"])
                         #coordinador_ingresado=True
                     else:                                      

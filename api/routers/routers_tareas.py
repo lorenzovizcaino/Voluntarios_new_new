@@ -172,12 +172,30 @@ def update_tarea(tarea:Tarea, id:int, db: Session = Depends(get_db)):
     
 
 
+# @routertareas.put('/tareaseditcoordinador/{id}', tags=['Tareas'])
+# def update_tarea(id:int, coordinador:bool,db: Session = Depends(get_db)):
+#     data=db.query(ModelTareas).filter(ModelTareas.id==id).first()
+#     if not data:
+#         return JSONResponse(status_code=404, content={"message":"Recurso no encontrado"})
+#     else:
+#         data.coordinador_Asignado=coordinador
+#         db.commit()
+#         return JSONResponse(status_code=200)
+
+
+
 @routertareas.put('/tareaseditcoordinador/{id}', tags=['Tareas'])
-def update_tarea(id:int, coordinador:bool,db: Session = Depends(get_db)):
-    data=db.query(ModelTareas).filter(ModelTareas.id==id).first()
-    if not data:
-        return JSONResponse(status_code=404, content={"message":"Recurso no encontrado"})
-    else:
-        data.coordinador_Asignado=coordinador
+async def update_tarea(id: int, coordinador_Asignado: bool = Query(...), db: Session = Depends(get_db)):
+    try:
+        data = db.query(ModelTareas).filter(ModelTareas.id==id).first()
+        if not data:
+            return JSONResponse(status_code=404, content={"message":"Recurso no encontrado"})
+        
+        data.coordinador_Asignado = coordinador_Asignado
         db.commit()
-        return JSONResponse(status_code=200)
+        return JSONResponse(status_code=200, content={"message": "Actualizado correctamente"})
+    
+    except Exception as e:
+        db.rollback()
+        print(f"Error: {str(e)}")  # Para debugging
+        return JSONResponse(status_code=500, content={"message": "Error interno del servidor"})
