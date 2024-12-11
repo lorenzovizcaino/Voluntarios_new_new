@@ -5,7 +5,7 @@ import requests
 import time
 from openpyxl import Workbook
 from calendar_widget import SpanishCalendar
-from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TURNOS_DISPONIBLES, get_selected_tab_index, path_fondo, obtener_tarea_completa
+from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, get_selected_tab_index, path_fondo, obtener_tarea_completa
 from enviar_email import enviar_correo
 
 class TareaSelecionada:
@@ -551,11 +551,33 @@ def admin(page: ft.Page):
         # Obtener usuarios disponibles
         try:
             response = requests.get(API_URL_TURNOS_DISPONIBLES, params=data)
-            if response.status_code == 200:
-                usuarios_disponibles = response.json()
-
+            if response.status_code==200:
+                
+                usuarios_disponibles=response.json()
                 for user in usuarios_disponibles:
-                    usuarios.append(user["user_id"])
+                    response2=requests.get(f"{API_URL_TAREAS}/{tarea_completa['id']}")
+                    tarea_consulta=response2.json()
+                    
+                    coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
+                    
+                    if tarea_completa["coordinador"]: #and  coordinador_ingresado==False:                    
+                        usuarios.append(user["user_id"])
+                        #poner a True que el coordinador esta elegido si el usuario es coordinador
+                        #FALTA QUE EL COORDINADOR ELEGIDO SEA EL DE MENOS TAREAS, DE MOMENTO AÑADE EL PRIMERO POR id
+                        #requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
+                        
+                        
+                    else:                                      
+                        response2=requests.get(f"{API_URL_DATOS_USER}/{user['user_id']}")                
+                        user_data2=response2.json()
+                        if user_data2["coordinador"]==False:
+                            usuarios.append(user["user_id"])
+
+            # if response.status_code == 200:
+            #     usuarios_disponibles = response.json()
+
+            #     for user in usuarios_disponibles:
+            #         usuarios.append(user["user_id"])
                 
             else:
                 print(f"Error al obtener datos1: {response.status_code}")
@@ -563,7 +585,7 @@ def admin(page: ft.Page):
         except Exception as e:
             print(f"Error en la conexión1: {str(e)}")
             return None
-
+        print(f"usuarios1:{usuarios}")
         usuariosfinales = usuarios.copy()
         fecha_tarea = f"{tarea_completa['day']}/{tarea_completa['month']}/{tarea_completa['year']}"
 
@@ -598,6 +620,13 @@ def admin(page: ft.Page):
         return usuariosfinales
     
     def asignar_tarea_autoasignar(tarea_completa, id_voluntario):
+        
+        #poner a True que el coordinador esta asignado si el usuario es coordinador
+        # response2=requests.get(f"{API_URL_DATOS_USER}/{id_voluntario}")                
+        # user_data2=response2.json()
+        # if user_data2["coordinador"]:
+        #     requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
+
 
         data_tarea = {
                 "id": tarea_completa["id"],
@@ -707,6 +736,10 @@ def admin(page: ft.Page):
         
         for lista in lista_para_tabla:
             lista_usuarios_tareas = []
+            lista_coordinadores_tareas = []
+            id_voluntarios_rasos=[]
+            id_voluntarios_coordinadores=[]
+            
             voluntarios_necesarios = lista["voluntarios_necesarios"]
             voluntarios_assignados = lista["voluntarios_asignados"] or 0
             
@@ -720,17 +753,62 @@ def admin(page: ft.Page):
                 tarea_completa = obtener_tarea_completa(lista["id"])
                 id_voluntarios_disponibles = obtener_id_voluntarios_disponibles2(tarea_completa)
                 
+
                 if id_voluntarios_disponibles is None:
                     continue
+
+
+
+
+
+                
+                for id_voluntario in id_voluntarios_disponibles:
+                    response2=requests.get(f"{API_URL_DATOS_USER}/{id_voluntario}")                
+                    user_data2=response2.json()
+                    if user_data2["coordinador"]:
+                        id_voluntarios_coordinadores.append(id_voluntario)
+                    else:
+                        id_voluntarios_rasos.append(id_voluntario)
+
+               
+
+                
+
+                response2=requests.get(f"{API_URL_TAREAS}/{tarea_completa['id']}")
+                tarea_consulta=response2.json()                    
+                coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
+
+                #si se cumple el siguiente if es que es necesario un coordinador
+                if len(id_voluntarios_coordinadores)>0 and not coordinador_ingresado:
+                    for voluntario_coordinador in id_voluntarios_coordinadores:
+                        response_contar = requests.get(f"{API_URL_TAREAS_ASIGNADAS}/{voluntario_coordinador}/count")
+                        numero_tareas = response_contar.json()
+                        lista_coordinadores_tareas.append(numero_tareas)
+
+                    lista_coordinadores_tareas.sort(key=lambda x: x['total_tareas'], reverse=False)
+                    asignar_tarea_autoasignar(tarea_completa, lista_coordinadores_tareas[0]['user_id'])
+                    requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
+
+                    # voluntarios_assignados si se asigna un coordinador ya cuenta como voluntario
+                    voluntarios_assignados+=1         
+                
+
+
+                
+
+
+
+                
                     
                 voluntarios_restantes = voluntarios_necesarios - voluntarios_assignados
-                if voluntarios_restantes >= len(id_voluntarios_disponibles):
-                    for voluntario in id_voluntarios_disponibles:
+                if voluntarios_restantes >= len(id_voluntarios_rasos):
+                    for voluntario in id_voluntarios_rasos:
                         asignar_tarea_autoasignar(tarea_completa, voluntario)
                         texto_barra_progreso.value = f"Asignando voluntario a la tarea: {lista['nombre']}"
                         page.update()
                 else:
-                    for voluntario in id_voluntarios_disponibles:
+                    for voluntario in id_voluntarios_rasos:
+                        
                         response_contar = requests.get(f"{API_URL_TAREAS_ASIGNADAS}/{voluntario}/count")
                         numero_tareas = response_contar.json()
                         lista_usuarios_tareas.append(numero_tareas)

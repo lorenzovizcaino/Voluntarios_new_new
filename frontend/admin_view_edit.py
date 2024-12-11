@@ -2,7 +2,7 @@ import flet as ft
 import requests
 
 from admin_view import tarea_para_editar
-from utils import API_URL_TAREAS, API_URL_TAREAS_BORRAR, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT, set_selected_tab_index,path_fondo
+from utils import API_URL_TAREAS, API_URL_TAREAS_BORRAR, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR,get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT, set_selected_tab_index,path_fondo
 from enviar_email import enviar_correo
 from calendar_widget import SpanishCalendar
 
@@ -115,6 +115,7 @@ def admin_edit(page: ft.Page):
             
                     
                 
+                
                 data_tarea = {
                     "id": tarea_selecionada_completa["id"],
                     "user_id": tarea_selecionada_completa["id"],  
@@ -137,6 +138,9 @@ def admin_edit(page: ft.Page):
                 response=requests.put(f"{API_URL_TAREAS_EDIT}/{tarea_selecionada_completa['id']}",json=data_tarea)
                 
                 if bandera:
+                    #poner a False que el coordinador esta asignado si el usuario es coordinador
+                    requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": False})
+                
                     voluntarios_para_borrar=[]
                     for i in range(1,6):
                         voluntario=f"id_voluntario_Asignado_{i}"
@@ -169,33 +173,40 @@ def admin_edit(page: ft.Page):
 
         
         
-        def borrar_voluntario(e, id):                   
+        def borrar_voluntario(e, id):          
+
+            #poner a False que el coordinador esta asignado si el usuario es coordinador
+            response2=requests.get(f"{API_URL_DATOS_USER}/{id}")                
+            user_data2=response2.json()
+            if user_data2["coordinador"]:
+                requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": False})
+
                 
-                params_tarea = {
-                    "id_voluntario": id
-                }
+            params_tarea = {
+                "id_voluntario": id
+            }
 
-                params_tareaasignada={
-                    "tarea_id":tarea_selecionada_completa['id'],
-                    "user_id": id
-                }
+            params_tareaasignada={
+                "tarea_id":tarea_selecionada_completa['id'],
+                "user_id": id
+            }
 
-                requests.put(f"{API_URL_TAREAS_BORRAR}/{tarea_selecionada_completa['id']}", params=params_tarea)
-                requests.delete(f"{API_URL_TAREAS_ASIGNADAS}", params=params_tareaasignada)                 
-                asunto=f"Cancelada la tarea de voluntariado asignada el dia {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"
-                mensaje=f"""
-                        Estimado voluntario:
-                        Se ha cancelado o modificado la tarea:
-                        TAREA: {tarea_selecionada_completa["tarea_name"]}
-                        UBICACION: {tarea_selecionada_completa["tarea_ubicacion"]}
-                        DIA: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}
+            requests.put(f"{API_URL_TAREAS_BORRAR}/{tarea_selecionada_completa['id']}", params=params_tarea)
+            requests.delete(f"{API_URL_TAREAS_ASIGNADAS}", params=params_tareaasignada)                 
+            asunto=f"Cancelada la tarea de voluntariado asignada el dia {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"
+            mensaje=f"""
+                    Estimado voluntario:
+                    Se ha cancelado o modificado la tarea:
+                    TAREA: {tarea_selecionada_completa["tarea_name"]}
+                    UBICACION: {tarea_selecionada_completa["tarea_ubicacion"]}
+                    DIA: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}
 
-                        Muchas gracias por su colaboracion
-                        """
+                    Muchas gracias por su colaboracion
+                    """
 
-                enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
-                
-                actualizar_tabla_voluntarios() 
+            enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
+            
+            actualizar_tabla_voluntarios() 
                 
                 
         
@@ -221,6 +232,8 @@ def admin_edit(page: ft.Page):
                     response = requests.get(f"{API_URL_LOGIN}/{voluntario_id}")
                     if response.status_code == 200:
                         voluntario_data = response.json()
+                        response2=requests.get(f"{API_URL_DATOS_USER}/{voluntario_data["id"]}")                
+                        user_data=response2.json()
                         voluntarios_asignados.append(voluntario_data)
                         data_table.rows.append(
                             ft.DataRow(
@@ -228,6 +241,13 @@ def admin_edit(page: ft.Page):
                                     ft.DataCell(
                                         ft.Container(
                                             content=ft.Text(voluntario_data["username"], size=16),
+                                            padding=ft.padding.all(5),
+                                            alignment=ft.alignment.center_left
+                                        )
+                                    ),
+                                    ft.DataCell(
+                                        ft.Container(
+                                            content=ft.Text(value="C" if user_data["coordinador"] else "V", size=16),
                                             padding=ft.padding.all(5),
                                             alignment=ft.alignment.center_left
                                         )
@@ -330,8 +350,21 @@ def admin_edit(page: ft.Page):
                             size=13,
                             weight=ft.FontWeight.W_500,
                         ),
-                        width=240,
-                        #padding=ft.padding.all(5),
+                        width=180,
+                        
+                    ),
+                    numeric=False,
+                ),
+                ft.DataColumn(
+                    label=ft.Container(
+                        content=ft.Text(
+                            "Rango",
+                            color=ft.colors.BLUE_GREY_800,
+                            size=13,
+                            weight=ft.FontWeight.W_500,
+                        ),
+                        width=60,
+                        
                     ),
                     numeric=False,
                 ),
@@ -345,9 +378,9 @@ def admin_edit(page: ft.Page):
                             weight=ft.FontWeight.W_500,
                             text_align=ft.TextAlign.CENTER,
                         ),
-                        width=90,
+                        width=70,
                         alignment=ft.alignment.center,
-                        #padding=ft.padding.all(5),
+                        
                     ),
                     numeric=False,
                 ),

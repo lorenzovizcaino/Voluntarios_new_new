@@ -40,8 +40,7 @@ def admin_assign(page: ft.Page):
     """    
     def obtener_id_voluntarios_disponibles(tarea_selecionada_completa):
         nonlocal coordinador_ingresado
-        print(tarea_selecionada_completa)
-        print("0")
+        
         
         usuarios=[] 
         usuariosfinales=[]      
@@ -56,24 +55,22 @@ def admin_assign(page: ft.Page):
 
         
 
-        #se comprueba que usuario estan disponibles en la fecha de la tarea que estamos asignando
+        #se comprueba que usuario estan disponibles en la fecha de la tarea que estamos asignando y que si hace falta un coordinador
+        #y este ya ha sido asignado ya no aparezcan el resto de coordinadores aunque esten disponibles para la tarea
         try:
             response=requests.get(API_URL_TURNOS_DISPONIBLES, params=data)
             if response.status_code==200:
-                print("1")
+                
                 usuarios_disponibles=response.json()
                 for user in usuarios_disponibles:
                     response2=requests.get(f"{API_URL_TAREAS}/{tarea_selecionada_completa['id']}")
                     tarea_consulta=response2.json()
                     
                     coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
-                    print("2")
-                    if tarea_selecionada_completa["coordinador"] and  coordinador_ingresado==False:
-                        print("3")
-                        
-                        requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": True})
+                    
+                    if tarea_selecionada_completa["coordinador"] and  coordinador_ingresado==False:                    
                         usuarios.append(user["user_id"])
-                        #coordinador_ingresado=True
+                        
                     else:                                      
                         response2=requests.get(f"{API_URL_DATOS_USER}/{user['user_id']}")                
                         user_data2=response2.json()
@@ -165,13 +162,13 @@ def admin_assign(page: ft.Page):
     
     def asignar_tarea(e, dato):
         
-        nonlocal tarea_selecionada_completa, voluntarios_disponibles, coordinador_ingresado
-        coordinador_ingresado=False
-        print(dato)
+        nonlocal tarea_selecionada_completa, voluntarios_disponibles
+        
+        #poner a True que el coordinador esta asignado si el usuario es coordinador
         response2=requests.get(f"{API_URL_DATOS_USER}/{dato["id"]}")                
         user_data2=response2.json()
         if user_data2["coordinador"]:
-            coordinador_ingresado=True
+            requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": True})
 
 
 
