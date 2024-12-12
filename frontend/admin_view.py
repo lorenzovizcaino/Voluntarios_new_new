@@ -743,7 +743,7 @@ def admin(page: ft.Page):
             voluntarios_necesarios = lista["voluntarios_necesarios"]
             voluntarios_assignados = lista["voluntarios_asignados"] or 0
             
-                
+            #este if comprueba que la tarea aun no esta completa con todos los usuarios    
             if voluntarios_necesarios > voluntarios_assignados:
                 tarea_actual += 1
                 barra_progreso.value = tarea_actual / total_tareas_para_asignar

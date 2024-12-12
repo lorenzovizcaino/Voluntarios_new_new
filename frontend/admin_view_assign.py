@@ -1,5 +1,10 @@
 import flet as ft
 import requests
+import json
+import os
+from time import sleep
+from plyer import notification
+from pathlib import Path
 from admin_view import tarea_para_asignar
 from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR, set_selected_tab_index,path_fondo, obtener_tarea_completa
 from enviar_email import enviar_correo
@@ -148,6 +153,66 @@ def admin_assign(page: ft.Page):
         
         return usuarios_disponibles
     
+
+
+    def guardar_notificacion(user_id, tarea_data):
+        #Guarda la notificación pendiente para un usuario
+        try:
+            notifications_dir = Path("notifications")
+            notifications_dir.mkdir(exist_ok=True)
+            
+            notification_file = notifications_dir / f"user_{user_id}_notifications.json"
+            
+            # Crear el mensaje de la notificación
+            notification_data = {
+                "title": "Nueva tarea de voluntariado asignada",
+                "message": f"""Tarea: {tarea_data['tarea_name']}
+                                Ubicación: {tarea_data['tarea_ubicacion']}
+                                Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
+                                Turno: {tarea_data['turno']}"""
+                                            }
+            
+            # Cargar notificaciones existentes o crear nueva lista
+            if notification_file.exists():
+                with open(notification_file, 'r', encoding='utf-8') as f:
+                    notifications = json.load(f)
+            else:
+                notifications = []
+                
+            notifications.append(notification_data)
+            
+            # Guardar notificaciones actualizadas
+            with open(notification_file, 'w', encoding='utf-8') as f:
+                json.dump(notifications, f, ensure_ascii=False)
+                
+        except Exception as e:
+            print(f"Error al guardar notificación: {e}")
+    
+
+
+
+
+    
+    def mostrar_notificacion_windows(title, message):
+        #Muestra una notificación de Windows
+        try:
+            notification.notify(
+                title=title,
+                message=message,
+                app_icon=None,  # e.g. 'C:\\icon_32x32.ico'
+                timeout=10,  # segundos
+            )
+            # Pequeña pausa para evitar conflictos entre notificaciones
+            sleep(0.5)
+        except Exception as e:
+            print(f"Error al mostrar notificación: {e}")
+
+
+
+
+
+
+    
     def asignar_tarea(e, dato):
         
         nonlocal tarea_selecionada_completa, voluntarios_disponibles
@@ -201,6 +266,63 @@ def admin_assign(page: ft.Page):
 
         enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
 
+
+        #notificacion_start
+
+        notification_data = {
+                "tarea_name": tarea_selecionada_completa["tarea_name"],
+                "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
+                "day": tarea_selecionada_completa["day"],
+                "month": tarea_selecionada_completa["month"],
+                "year": tarea_selecionada_completa["year"],
+                "turno": tarea_selecionada_completa["turno"]
+            }
+            
+            # Guardar la notificación para mostrarla cuando el usuario haga login
+        guardar_notificacion(dato["id"], notification_data)
+            
+            # Mostrar la notificación inmediatamente al administrador
+        mensaje_notificacion = f"""Se ha asignado una nueva tarea a {dato['username']}
+                            Tarea: {tarea_selecionada_completa["tarea_name"]}
+                            Fecha: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"""
+            
+        mostrar_notificacion_windows(
+                "Tarea Asignada",
+                mensaje_notificacion
+            )
+
+        # notification_data = {
+        #     "tarea_name": tarea_selecionada_completa["tarea_name"],
+        #     "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
+        #     "day": tarea_selecionada_completa["day"],
+        #     "month": tarea_selecionada_completa["month"],
+        #     "year": tarea_selecionada_completa["year"],
+        #     "turno": tarea_selecionada_completa["turno"]
+        # }
+        
+        # # Guardar la notificación para mostrarla cuando el usuario haga login
+        # guardar_notificacion(dato["id"], notification_data)
+        
+        # # Mostrar la notificación inmediatamente al administrador
+        # mensaje_notificacion = f"""Se ha asignado una nueva tarea a {dato['username']}
+        #                         Tarea: {tarea_selecionada_completa["tarea_name"]}
+        #                         Fecha: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"""
+        
+        # mostrar_notificacion_windows(
+        #     "Tarea Asignada",
+        #     mensaje_notificacion
+        # )
+
+
+
+        #notificacion_end
+
+
+
+
+
+
+
         tarea_selecionada_completa=obtener_tarea_completa(tarea_para_asignar.tarea_seleccionada["id"])
         
         tarea_para_asignar.tarea_seleccionada['voluntarios_asignados']=tarea_selecionada_completa['voluntarios_asignados']
@@ -244,6 +366,7 @@ def admin_assign(page: ft.Page):
                                
                 response2=requests.get(f"{API_URL_DATOS_USER}/{dato["id"]}")                
                 user_data2=response2.json()
+                print(user_data2)
                 coordinador="Si" if user_data2["coordinador"] else "No"
                 duplica_usuario_tarea=comprobar_duplicidad_usuario_tarea(dato["id"])                
                 if duplica_usuario_tarea:                    
@@ -274,6 +397,19 @@ def admin_assign(page: ft.Page):
                                 ft.Container(
                                     content=ft.Text(
                                         str(numero_tareas["total_tareas"]),
+                                        size=16,
+                                        text_align=ft.TextAlign.CENTER,
+                                    ),
+                                    width=90,
+                                    alignment=ft.alignment.center,
+                                    padding=ft.padding.all(5),
+                                )
+                            ),
+
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(
+                                        str(user_data2["amigo"]),
                                         size=16,
                                         text_align=ft.TextAlign.CENTER,
                                     ),
@@ -353,7 +489,7 @@ def admin_assign(page: ft.Page):
                         size=13,
                         weight=ft.FontWeight.W_500,
                     ),
-                    width=130,
+                    width=110,
                     padding=ft.padding.all(5),
                 ),
                 numeric=False,
@@ -382,7 +518,23 @@ def admin_assign(page: ft.Page):
                         weight=ft.FontWeight.W_500,
                         text_align=ft.TextAlign.CENTER,
                     ),
-                    width=90,
+                    width=80,
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.all(5),
+                ),
+                numeric=False,
+            ),
+
+            ft.DataColumn(
+                label=ft.Container(
+                    content=ft.Text(
+                        "Compañero",
+                        color=ft.colors.BLUE_GREY_800,
+                        size=13,
+                        weight=ft.FontWeight.W_500,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    width=80,
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(5),
                 ),
@@ -398,7 +550,7 @@ def admin_assign(page: ft.Page):
                         weight=ft.FontWeight.W_500,
                         text_align=ft.TextAlign.CENTER,
                     ),
-                    width=120,
+                    width=100,
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(5),
                 ),

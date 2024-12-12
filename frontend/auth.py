@@ -1,12 +1,55 @@
+from pathlib import Path
 import flet as ft
 import json
 import requests
+import os
+from time import sleep
+from plyer import notification
 from utils import API_URL_LOGIN, API_URL_DATOS_USER, set_id_usuario_logeado,path_fondo
 
 def login(page: ft.Page):
     page.window_width = 400
     page.window_height = 400
     page.window_center()
+
+
+
+    #notificacion_start
+    
+    def check_and_show_notifications(user_id):
+        
+        #Verifica y muestra las notificaciones pendientes para un usuario
+        
+        try:
+            notifications_file = Path(f"notifications/user_{user_id}_notifications.json")
+            
+            if notifications_file.exists():
+                with open(notifications_file, 'r', encoding='utf-8') as f:
+                    notifications = json.load(f)
+                    
+                # Mostrar cada notificación pendiente
+                for notification_data in notifications:
+                    try:
+                        notification.notify(
+                            title=notification_data["title"],
+                            message=notification_data["message"],
+                            app_icon=None,
+                            timeout=10,
+                        )
+                        # Pequeña pausa entre notificaciones
+                        sleep(0.5)
+                    except Exception as e:
+                        print(f"Error al mostrar notificación: {e}")
+                        
+                # Limpiar las notificaciones mostradas
+                os.remove(notifications_file)
+                
+        except Exception as e:
+            print(f"Error al verificar notificaciones: {e}")
+
+
+
+    #notificacion_end
 
     
     def acceder(e):
@@ -33,6 +76,8 @@ def login(page: ft.Page):
 
                 if user_data2["tipo_usuario"] == "user":                     
                     page.go("/user")
+                    #ver notificaciones pendientes
+                    check_and_show_notifications(id)
                 elif user_data2["tipo_usuario"] == "admin":  
                     page.go("/admin")                
                     
