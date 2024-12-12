@@ -17,19 +17,7 @@ def admin_assign(page: ft.Page):
     tarea_selecionada_completa=None
     coordinador_ingresado=False
 
-    # def obtener_tarea_completa():
-    #     try: 
-    #         response=requests.get(f"{API_URL_TAREAS}/{tarea_para_asignar.tarea_seleccionada["id"]}")
-    #         if response.status_code==200:
-    #             tarea_completa=response.json()
-    #             return tarea_completa
-    #         else:
-    #             print(f"Error al obtener datos: {response.status_code}")
-    #             return None
-                
-    #     except Exception as e:
-    #         print(f"Error en la conexión: {str(e)}")
-    #         return None
+    
         
 
     """
@@ -329,7 +317,7 @@ def admin_assign(page: ft.Page):
             
         
 
-    print(tarea_para_asignar.tarea_seleccionada['nombre'])    
+      
     flecha=ft.IconButton(ft.icons.ARROW_BACK, tooltip="Atras", icon_color=ft.colors.BLUE_900, icon_size=30, on_click=para_atras)
     texto_atras=ft.Text(value="Atras", size=20, color=ft.colors.BLUE_900)
     atras=ft.Row(controls=[flecha,texto_atras])
@@ -433,7 +421,7 @@ def admin_assign(page: ft.Page):
     tabla_con_scroll = ft.ListView(
         controls=[data_table],
         expand=1,
-        height=400, 
+        height=370, 
     )
 
     contenedor_tabla = ft.Container(
@@ -486,7 +474,7 @@ def admin_assign(page: ft.Page):
 
     contenedor=ft.Container(
         content=ft.Column(
-            controls=[atras, ft.Container(height=30),titulo, columna_tarea, subtitulo, contenedor_tabla,  ] + ([container_info] if info.value != "" else [])  # Añade container_info solo si hay valor
+            controls=[atras,titulo, columna_tarea, subtitulo, contenedor_tabla,  ] + ([container_info] if info.value != "" else [])  # Añade container_info solo si hay valor
         ),
         padding=30
     )
@@ -503,7 +491,7 @@ def admin_assign(page: ft.Page):
                     image_src=path_fondo,    
                     image_fit=ft.ImageFit.COVER,
                     image_opacity=0.2,
-                    #margin=ft.margin.only(top=50)  # La imagen comenzará 50px más abajo
+                    #margin=ft.margin.only(top=50)  
                 ),
                 ft.Container(
                     content=contenedor,

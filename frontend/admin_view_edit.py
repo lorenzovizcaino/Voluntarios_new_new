@@ -504,9 +504,11 @@ def admin_edit(page: ft.Page):
     contenedor=montar_contenido_edit()
 
     pie_info=ft.Container(
-        content=ft.Text(value="Al modificar la fecha, el turno o al reducir voluntarios de una tarea, se borraran los voluntarios asignados",
-                        size=20,
-                        color="RED"),
+        content=ft.Text(value="Al modificar la fecha, el turno, cambiar campo coordinador \no al reducir voluntarios de una tarea, se borraran los voluntarios asignados",
+                        size=18,
+                        color="RED",
+                        weight=ft.FontWeight.BOLD
+                        ),
         margin=ft.margin.only(left=40, top=25)
         )
 
