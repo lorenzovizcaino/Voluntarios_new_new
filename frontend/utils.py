@@ -15,6 +15,7 @@ API_URL_TAREAS_EDIT = "http://127.0.0.1:8000/tareasedit"
 API_URL_TAREAS_EDIT_COORDINADOR = "http://127.0.0.1:8000/tareaseditcoordinador"
 API_URL_TAREAS_BORRAR = "http://127.0.0.1:8000/tareasborrarusuario"
 API_URL_TAREAS_ASIGNADAS = "http://127.0.0.1:8000/tareasasignadas"
+API_URL_USERS_ASIGNADOS = "http://127.0.0.1:8000/usersasignados"
 
 path_fondo = os.path.abspath(os.path.join("assets", "images", "3.png"))
 

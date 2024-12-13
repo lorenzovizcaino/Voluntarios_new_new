@@ -39,7 +39,7 @@ def create_tarea(tarea_asignada: TareaAsignada, db: Session = Depends(get_db)):
                 "detail": str(e)
             }
         )
-    
+#devuelve las tareas de un usuario
 @routertareas_asignadas.get('/tareasasignadas/{user_id}', tags=['TareasAsignadas']) 
 def tareas_usuario(user_id: int, db: Session = Depends(get_db)):
     try:
@@ -60,6 +60,32 @@ def tareas_usuario(user_id: int, db: Session = Depends(get_db)):
             status_code=500,
             content={
                 "message": "Error al listar tareas del usuario {user_id}",
+                "detail": str(e)
+            }
+        )
+    
+
+#devuelve los id de usuarios que estan en una tarea
+@routertareas_asignadas.get('/usersasignados/{tarea_id}', tags=['TareasAsignadas']) 
+def usuario_tareas(tarea_id: int, db: Session = Depends(get_db)):
+    try:
+        
+        data = db.query(ModelTareasAsignadas).filter(
+            ModelTareasAsignadas.tarea_id == tarea_id
+        ).all()
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                
+                "users": jsonable_encoder(data)
+            }
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al listar usuarios de una tarea {tarea_id}",
                 "detail": str(e)
             }
         )

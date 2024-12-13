@@ -5,7 +5,7 @@ import requests
 import time
 from openpyxl import Workbook
 from calendar_widget import SpanishCalendar
-from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, get_selected_tab_index, path_fondo, obtener_tarea_completa
+from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, get_selected_tab_index, path_fondo, obtener_tarea_completa
 from enviar_email import enviar_correo
 
 class TareaSelecionada:
@@ -317,13 +317,54 @@ def admin(page: ft.Page):
             return None
         
     def borrar_registro(e, id):        
-        
+        tarea_selecionada_completa=obtener_tarea_completa(id)
         for registro in lista_para_tabla:
             if registro["id"] == id:
                 
                 lista_para_tabla.remove(registro)  
+                response=requests.get(f"{API_URL_USERS_ASIGNADOS}/{id}")
                 requests.delete(f"{API_URL_TAREAS}/{id}")                   
                 requests.delete(f"{API_URL_TAREAS_ASIGNADAS}/{id}") 
+                #recuperamos los id de los usuarios que estaban asignados a la tarea borrada, si los hubiese 
+                data=response.json()
+                user_id_tarea_borrada=[]
+                for user in data["users"]:
+                    id_user=user["user_id"]
+                    user_id_tarea_borrada.append(id_user)
+                #una vez obtenidos los usuarios se envia correo y notificacion de cancelacion de la tarea
+                for user in user_id_tarea_borrada:
+
+                    asunto=f"Cancelada la tarea de voluntariado asignada el dia {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"
+                    mensaje=f"""
+                            Estimado voluntario:
+                            Se ha cancelado o modificado la tarea:
+                            TAREA: {tarea_selecionada_completa["tarea_name"]}
+                            UBICACION: {tarea_selecionada_completa["tarea_ubicacion"]}
+                            DIA: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}
+
+                            Muchas gracias por su colaboracion
+                            """
+
+                    enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
+
+                    #notificacion_start
+                    notification_data = {
+                            "tarea_name": tarea_selecionada_completa["tarea_name"],
+                            "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
+                            "day": tarea_selecionada_completa["day"],
+                            "month": tarea_selecionada_completa["month"],
+                            "year": tarea_selecionada_completa["year"],
+                            "turno": tarea_selecionada_completa["turno"]
+                        }
+                        
+                    # Guardar la notificación para mostrarla cuando el usuario haga login
+                    guardar_notificacion(user, notification_data, alta_baja_tarea=False)
+                    #notificacion_end
+
+
+
+
+
                                
                 break  
         cuadro_dialogo.open = False     
