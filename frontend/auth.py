@@ -15,7 +15,6 @@ def login(page: ft.Page):
 
 
     #notificacion_start
-    
     def check_and_show_notifications(user_id):
         
         #Verifica y muestra las notificaciones pendientes para un usuario
@@ -46,9 +45,6 @@ def login(page: ft.Page):
                 
         except Exception as e:
             print(f"Error al verificar notificaciones: {e}")
-
-
-
     #notificacion_end
 
     

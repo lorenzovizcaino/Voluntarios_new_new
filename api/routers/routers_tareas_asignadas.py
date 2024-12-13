@@ -95,9 +95,13 @@ def count_tareas_usuario(user_id: int, db: Session = Depends(get_db)):
 @routertareas_asignadas.delete('/tareasasignadas/{tarea_id}', tags=['TareasAsignadas'])
 def delete_tarea_asignada(tarea_id: int, db: Session = Depends(get_db)):
     #para borrar mas de un registro no se utiliza all(), se utiliza delete()
-    data=db.query(ModelTareasAsignadas).filter(ModelTareasAsignadas.tarea_id==tarea_id).delete()      
+    data=db.query(ModelTareasAsignadas).filter(ModelTareasAsignadas.tarea_id==tarea_id).delete() 
+         
     db.commit()
     return JSONResponse(content={"message":"Se ha eliminado la/s tarea/s asignada/s"})
+
+
+
 
 
 #endpoint el cual recibe el id_tarea + id_usuario y borrar una tarea_asignada

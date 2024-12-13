@@ -1,12 +1,12 @@
 import flet as ft
 import requests
-import json
+
 import os
 from time import sleep
 from plyer import notification
-from pathlib import Path
+
 from admin_view import tarea_para_asignar
-from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR, set_selected_tab_index,path_fondo, obtener_tarea_completa
+from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR, set_selected_tab_index,path_fondo, obtener_tarea_completa, guardar_notificacion
 from enviar_email import enviar_correo
 
 
@@ -155,38 +155,7 @@ def admin_assign(page: ft.Page):
     
 
 
-    def guardar_notificacion(user_id, tarea_data):
-        #Guarda la notificación pendiente para un usuario
-        try:
-            notifications_dir = Path("notifications")
-            notifications_dir.mkdir(exist_ok=True)
-            
-            notification_file = notifications_dir / f"user_{user_id}_notifications.json"
-            
-            # Crear el mensaje de la notificación
-            notification_data = {
-                "title": "Nueva tarea de voluntariado asignada",
-                "message": f"""Tarea: {tarea_data['tarea_name']}
-                                Ubicación: {tarea_data['tarea_ubicacion']}
-                                Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
-                                Turno: {tarea_data['turno']}"""
-                                            }
-            
-            # Cargar notificaciones existentes o crear nueva lista
-            if notification_file.exists():
-                with open(notification_file, 'r', encoding='utf-8') as f:
-                    notifications = json.load(f)
-            else:
-                notifications = []
-                
-            notifications.append(notification_data)
-            
-            # Guardar notificaciones actualizadas
-            with open(notification_file, 'w', encoding='utf-8') as f:
-                json.dump(notifications, f, ensure_ascii=False)
-                
-        except Exception as e:
-            print(f"Error al guardar notificación: {e}")
+    
     
 
 
@@ -278,40 +247,20 @@ def admin_assign(page: ft.Page):
                 "turno": tarea_selecionada_completa["turno"]
             }
             
-            # Guardar la notificación para mostrarla cuando el usuario haga login
-        guardar_notificacion(dato["id"], notification_data)
+        # Guardar la notificación para mostrarla cuando el usuario haga login
+        guardar_notificacion(dato["id"], notification_data, alta_baja_tarea=True)
             
-            # Mostrar la notificación inmediatamente al administrador
-        mensaje_notificacion = f"""Se ha asignado una nueva tarea a {dato['username']}
-                            Tarea: {tarea_selecionada_completa["tarea_name"]}
-                            Fecha: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"""
-            
-        mostrar_notificacion_windows(
-                "Tarea Asignada",
-                mensaje_notificacion
-            )
-
-        # notification_data = {
-        #     "tarea_name": tarea_selecionada_completa["tarea_name"],
-        #     "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
-        #     "day": tarea_selecionada_completa["day"],
-        #     "month": tarea_selecionada_completa["month"],
-        #     "year": tarea_selecionada_completa["year"],
-        #     "turno": tarea_selecionada_completa["turno"]
-        # }
-        
-        # # Guardar la notificación para mostrarla cuando el usuario haga login
-        # guardar_notificacion(dato["id"], notification_data)
-        
-        # # Mostrar la notificación inmediatamente al administrador
+        # Mostrar la notificación inmediatamente al administrador
         # mensaje_notificacion = f"""Se ha asignado una nueva tarea a {dato['username']}
-        #                         Tarea: {tarea_selecionada_completa["tarea_name"]}
-        #                         Fecha: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"""
-        
+        #                     Tarea: {tarea_selecionada_completa["tarea_name"]}
+        #                     Fecha: {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"""
+            
         # mostrar_notificacion_windows(
-        #     "Tarea Asignada",
-        #     mensaje_notificacion
-        # )
+        #         "Tarea Asignada",
+        #         mensaje_notificacion
+        #     )
+
+        
 
 
 

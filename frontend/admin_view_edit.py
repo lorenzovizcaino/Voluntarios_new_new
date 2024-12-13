@@ -2,7 +2,7 @@ import flet as ft
 import requests
 
 from admin_view import tarea_para_editar
-from utils import API_URL_TAREAS, API_URL_TAREAS_BORRAR, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR,get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT, set_selected_tab_index,path_fondo
+from utils import API_URL_TAREAS, API_URL_TAREAS_BORRAR, guardar_notificacion, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR,get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT, set_selected_tab_index,path_fondo
 from enviar_email import enviar_correo
 from calendar_widget import SpanishCalendar
 
@@ -205,6 +205,22 @@ def admin_edit(page: ft.Page):
                     """
 
             enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
+
+            #notificacion_start
+            notification_data = {
+                    "tarea_name": tarea_selecionada_completa["tarea_name"],
+                    "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
+                    "day": tarea_selecionada_completa["day"],
+                    "month": tarea_selecionada_completa["month"],
+                    "year": tarea_selecionada_completa["year"],
+                    "turno": tarea_selecionada_completa["turno"]
+                }
+                
+            # Guardar la notificación para mostrarla cuando el usuario haga login
+            guardar_notificacion(id, notification_data, alta_baja_tarea=False)
+            #notificacion_end
+
+
             
             actualizar_tabla_voluntarios() 
                 

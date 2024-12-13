@@ -5,7 +5,7 @@ import requests
 import time
 from openpyxl import Workbook
 from calendar_widget import SpanishCalendar
-from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, get_selected_tab_index, path_fondo, obtener_tarea_completa
+from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, get_selected_tab_index, path_fondo, obtener_tarea_completa
 from enviar_email import enviar_correo
 
 class TareaSelecionada:
@@ -317,13 +317,14 @@ def admin(page: ft.Page):
             return None
         
     def borrar_registro(e, id):        
-        print(f"id_en_borrar {id}")
+        
         for registro in lista_para_tabla:
             if registro["id"] == id:
-                print(f"registro[id]= {registro["id"]}")
+                
                 lista_para_tabla.remove(registro)  
                 requests.delete(f"{API_URL_TAREAS}/{id}")                   
-                requests.delete(f"{API_URL_TAREAS_ASIGNADAS}/{id}")                   
+                requests.delete(f"{API_URL_TAREAS_ASIGNADAS}/{id}") 
+                               
                 break  
         cuadro_dialogo.open = False     
         actualizar_tabla()
@@ -668,6 +669,19 @@ def admin(page: ft.Page):
                 """
 
         enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
+        #notificacion_start
+        notification_data = {
+                "tarea_name": tarea_completa["tarea_name"],
+                "tarea_ubicacion": tarea_completa["tarea_ubicacion"],
+                "day": tarea_completa["day"],
+                "month": tarea_completa["month"],
+                "year": tarea_completa["year"],
+                "turno": tarea_completa["turno"]
+            }
+            
+        # Guardar la notificación para mostrarla cuando el usuario haga login
+        guardar_notificacion(id_voluntario, notification_data, alta_baja_tarea=True)
+        #notificacion_end
 
         
         

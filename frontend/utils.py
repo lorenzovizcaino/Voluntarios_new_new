@@ -1,5 +1,7 @@
 import os
 import requests
+import json
+from pathlib import Path
 
 
 
@@ -52,3 +54,51 @@ def obtener_tarea_completa(id_tarea):
     except Exception as e:
         print(f"Error en la conexión: {str(e)}")
         return None
+    
+
+
+
+def guardar_notificacion(user_id, tarea_data, alta_baja_tarea):
+        #Guarda la notificación pendiente para un usuario
+        try:
+            notifications_dir = Path("notifications")
+            notifications_dir.mkdir(exist_ok=True)
+            
+            notification_file = notifications_dir / f"user_{user_id}_notifications.json"
+            
+            # Crear el mensaje de la notificación
+            if alta_baja_tarea:
+                notification_data = {
+                    "title": "Nueva tarea de voluntariado asignada:",
+                    "message": f"""Tarea: {tarea_data['tarea_name']}
+                                    Ubicación: {tarea_data['tarea_ubicacion']}
+                                    Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
+                                    Turno: {tarea_data['turno']}"""
+                                                }
+            else:
+                notification_data = {
+                "title": "Se ha cancelado o modificado la tarea:",
+                "message": f"""Tarea: {tarea_data['tarea_name']}
+                                Ubicación: {tarea_data['tarea_ubicacion']}
+                                Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
+                                Turno: {tarea_data['turno']}"""
+                                            }
+            
+            # Cargar notificaciones existentes o crear nueva lista
+            if notification_file.exists():
+                with open(notification_file, 'r', encoding='utf-8') as f:
+                    #Lee el contenido JSON del archivo y lo convierte en una lista de Python
+                    notifications = json.load(f)
+            else:
+                notifications = []
+                
+            notifications.append(notification_data)
+            
+            # Guardar notificaciones actualizadas
+            with open(notification_file, 'w', encoding='utf-8') as f:
+                #Convierte la lista de notificaciones a formato JSON y la guarda en el archivo
+                #ensure_ascii=False permite guardar caracteres especiales correctamente
+                json.dump(notifications, f, ensure_ascii=False)
+                
+        except Exception as e:
+            print(f"Error al guardar notificación: {e}")
