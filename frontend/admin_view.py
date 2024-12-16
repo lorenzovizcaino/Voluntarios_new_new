@@ -5,7 +5,7 @@ import requests
 import time
 from openpyxl import Workbook
 from calendar_widget import SpanishCalendar
-from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, get_selected_tab_index, path_fondo, obtener_tarea_completa
+from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_LOGIN,API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, API_URL_LOGIN_DATOS, get_selected_tab_index, path_fondo, obtener_tarea_completa
 from enviar_email import enviar_correo
 
 class TareaSelecionada:
@@ -663,11 +663,7 @@ def admin(page: ft.Page):
     
     def asignar_tarea_autoasignar(tarea_completa, id_voluntario):
         
-        #poner a True que el coordinador esta asignado si el usuario es coordinador
-        # response2=requests.get(f"{API_URL_DATOS_USER}/{id_voluntario}")                
-        # user_data2=response2.json()
-        # if user_data2["coordinador"]:
-        #     requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
+        
 
 
         data_tarea = {
@@ -725,7 +721,48 @@ def admin(page: ft.Page):
         #notificacion_end
 
         
+    
+    def obtener_amigo(id_usuario):
+        #obtener el amigo del id_usuario
+        response_datos_usuario=requests.get(f"{API_URL_DATOS_USER}/{id_usuario}")
+        data_amigo=response_datos_usuario.json()
+        amigo=data_amigo["amigo"] or "no tiene amigo asignado"
+        return amigo
+    
+    def comprobar_amigo(id_usuario):
+        #obtenemos username del usuario
+        response_datos_usuario=requests.get(f"{API_URL_LOGIN}/{id_usuario}")
+        data_usuario=response_datos_usuario.json()
+        username_usuario=data_usuario["username"]
         
+        #obtener el amigo del id_usuario
+        amigo=obtener_amigo(id_usuario)
+        
+        if amigo=="no tiene amigo asignado":
+            return None
+        else:
+            #comprobar que la amistad sea reciproca
+
+            #obtenemos la id del amigo
+            response_id_amigo=requests.get(f"{API_URL_LOGIN_DATOS}/{amigo}")
+            data_response_id_amigo=response_id_amigo.json()
+            print(f"data_response_id_amigo: {data_response_id_amigo}")
+            id_amigo=data_response_id_amigo["id"]
+            #con la id_amigo vemos si la amistad es reciproca con id_usuario
+            amigo_del_amigo=obtener_amigo(id_amigo)
+        #si el amigo del amigo_del_usuario es el propio amigo, es decir amistad reciproca devuelves el id del amigo del usuario
+        if amigo_del_amigo==username_usuario:
+            return id_amigo
+        else:
+            return None
+    
+
+            
+        
+
+        
+
+
 
     def auto_asignar_tareas(e):
         
@@ -794,6 +831,7 @@ def admin(page: ft.Page):
             lista_coordinadores_tareas = []
             id_voluntarios_rasos=[]
             id_voluntarios_coordinadores=[]
+            id_amigo=None
             
             voluntarios_necesarios = lista["voluntarios_necesarios"]
             voluntarios_assignados = lista["voluntarios_asignados"] or 0
@@ -842,6 +880,13 @@ def admin(page: ft.Page):
 
                     lista_coordinadores_tareas.sort(key=lambda x: x['total_tareas'], reverse=False)
                     asignar_tarea_autoasignar(tarea_completa, lista_coordinadores_tareas[0]['user_id'])
+                    
+                    id_amigo=comprobar_amigo(lista_coordinadores_tareas[0]['user_id'])
+                    print(f"id_amigo: {id_amigo}")
+                    
+
+
+
                     requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
 
                     # voluntarios_assignados si se asigna un coordinador ya cuenta como voluntario
@@ -862,6 +907,22 @@ def admin(page: ft.Page):
                         texto_barra_progreso.value = f"Asignando voluntario a la tarea: {lista['nombre']}"
                         page.update()
                 else:
+
+                    #bucle para añadir amigos antes que por acumumacion tareas
+                    while True or voluntarios_restantes !=0:
+                        
+                        if id_amigo in id_voluntarios_rasos:
+                            asignar_tarea_autoasignar(tarea_completa, id_amigo)
+                            copia_id_amigo=id_amigo
+                            id_voluntarios_rasos.remove(id_amigo)#quitar de la lista
+                            id_amigo=comprobar_amigo(copia_id_amigo)
+                            voluntarios_assignados+=1
+                            voluntarios_restantes = voluntarios_necesarios - voluntarios_assignados
+                        else:
+                            break
+
+
+
                     for voluntario in id_voluntarios_rasos:
                         
                         response_contar = requests.get(f"{API_URL_TAREAS_ASIGNADAS}/{voluntario}/count")
@@ -1067,7 +1128,7 @@ def admin(page: ft.Page):
         title=ft.Text("Borrar tarea"),
         content=ft.Text("¿Estás seguro de borrar la tarea?"),
         actions=[
-            ft.TextButton("Aceptar", on_click=lambda e: None),  # Handler vacío inicial ya que ya que el handler real se asignará dinámicamente en show_dialog 
+            ft.TextButton("Aceptar", on_click=lambda e: None),  # Handler vacío inicial ya que  el handler real se asignará dinámicamente en show_dialog 
             ft.TextButton("Cancelar", on_click=cancelar_clicked),
         ],
     )

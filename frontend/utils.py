@@ -7,6 +7,7 @@ from pathlib import Path
 
 # URLs de API
 API_URL_LOGIN = "http://127.0.0.1:8000/login"
+API_URL_LOGIN_DATOS = "http://127.0.0.1:8000/logindatos"
 API_URL_DATOS_USER = "http://127.0.0.1:8000/datosuser"
 API_URL_TURNOS = "http://127.0.0.1:8000/turnos"
 API_URL_TURNOS_DISPONIBLES = "http://127.0.0.1:8000/turnosdisponibles"

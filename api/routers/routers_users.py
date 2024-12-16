@@ -38,3 +38,12 @@ def get_user_id(id: int, db: Session = Depends(get_db)):
         return JSONResponse(status_code=404, content={"message":"Recurso no encontrado"})
     else:         
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
+
+
+@routerlogin.get("/logindatos/{username}", tags=['login'])
+def get_user_id(username: str, db: Session = Depends(get_db)):
+    data=db.query(ModelUser).filter(ModelUser.username==username).first()
+    if not data:
+        return JSONResponse(status_code=404, content={"message":"Recurso no encontrado"})
+    else:         
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))

@@ -1223,10 +1223,11 @@ def user(page: ft.Page):
         animation_duration=300,
         on_change=on_tabs_changed,
         tabs=[
+            ft.Tab(text="Ver Tareas asignadas", icon=ft.icons.TASK, content=columna_tareas_asignadas),
             ft.Tab(text="Calendario por día", icon=ft.icons.CALENDAR_MONTH, content=columna_calendario_disponibilidad),
             ft.Tab(text="Calendario por turno", icon=ft.icons.CALENDAR_MONTH, content=columna_de_tab2),
             ft.Tab(text="Calendario por dia de semana", icon=ft.icons.CALENDAR_MONTH, content=columna_de_tab3),
-            ft.Tab(text="Ver Tareas asignadas", icon=ft.icons.TASK, content=columna_tareas_asignadas),
+            
         ],
         expand=1,
 
