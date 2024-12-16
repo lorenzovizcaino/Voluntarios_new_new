@@ -21,6 +21,12 @@ def login(page: ft.Page):
         
         try:
             notifications_file = Path(f"notifications/user_{user_id}_notifications.json")
+
+            # Ruta al icono
+            icon_path = Path("assets/images/icono.ico")
+            
+            # Convertir la ruta del icono a string absoluto
+            icon_absolute_path = str(icon_path.absolute())
             
             if notifications_file.exists():
                 with open(notifications_file, 'r', encoding='utf-8') as f:
@@ -32,7 +38,7 @@ def login(page: ft.Page):
                         notification.notify(
                             title=notification_data["title"],
                             message=notification_data["message"],
-                            app_icon=None,
+                            app_icon=icon_absolute_path,
                             timeout=10,
                         )
                         # Pequeña pausa entre notificaciones
