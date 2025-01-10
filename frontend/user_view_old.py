@@ -280,15 +280,6 @@ def user(page: ft.Page):
                     response = requests.post(API_URL_TURNOS, json=data)
                 else:
                     response = requests.delete(API_URL_TURNOS, json=data)
-
-                # Actualizar todas las pestañas después de cada cambio
-                mostrar_mes2()
-                columna_de_tab2.controls[1] = montar_calendario_por_turno()
-                mostrar_mes3()
-                columna_de_tab3.controls[1] = montar_calendario_por_dias_semana()
-                page.update()
-
-
             except Exception as e:
                 print(f"Error al modificar turno: {str(e)}")
 
@@ -687,7 +678,7 @@ def user(page: ft.Page):
         month=mostrar_mes2().month
         year=mostrar_mes2().year
         ch=e.control.key["ch"]
-        
+        print(f"ch: {ch}")
         
         # metodo que obtiene el numero de dias de un mes y año especificado
         num_dias = calendar.monthrange(year, month)[1]  
@@ -719,13 +710,6 @@ def user(page: ft.Page):
                         requests.post(API_URL_TURNOS, json=data)
                 else:
                     requests.delete(API_URL_TURNOS, json=data)
-
-                # Actualizar todas las pestañas después de cada cambio
-                montar_calendario()
-                columna_de_tab3.controls[1] = montar_calendario_por_dias_semana()
-                page.update()
-
-
             except Exception as e:
                 print(f"Error al modificar turno: {str(e)}")
         
@@ -996,13 +980,6 @@ def user(page: ft.Page):
                             requests.post(API_URL_TURNOS, json=data)
                     else:
                         requests.delete(API_URL_TURNOS, json=data)
-
-                    # Actualizar todas las pestañas después de cada cambio
-                    montar_calendario()
-                    columna_de_tab2.controls[1] = montar_calendario_por_turno()
-                    page.update()
-
-
                 except Exception as e:
                     print(f"Error al modificar turno: {str(e)}")
             
