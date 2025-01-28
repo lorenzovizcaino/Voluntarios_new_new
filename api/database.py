@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Conexión a la base de datos SQLite
-DATABASE_URL = "sqlite:///./voluntarios.db"
+DATABASE_URL = "sqlite:///./frontend/voluntarios.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 session = sessionmaker(autocommit=False, autoflush=False, bind=engine)

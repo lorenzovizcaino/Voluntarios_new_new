@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  n8n:
+    container_name: n8n
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      - WEBHOOK_URL=${URL}
+      - TZ=${TIMEZONE}
+      - GENERIC_TIMEZONE=${TIMEZONE}
+      - N8N_SQLITE_PATH=/db/voluntarios.db
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - NODE_ENV=production
+    networks:
+      - n8n-network
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./voluntarios.db:/db/voluntarios.db
+    ports:
+      - "5678:5678"
+    user: "1000:1000"
+
+  ngrok:
+    container_name: ngrok
+    image: ngrok/ngrok:latest
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_TOKEN}
+    ports:
+      - "4040:4040"
+    command:
+      - http
+      - n8n:5678
+      - --domain=tidy-neutral-ostrich.ngrok-free.app
+    networks:
+      - n8n-network
+
+volumes:
+  n8n_data:
+
+networks:
+  n8n-network:
+    driver: bridge
