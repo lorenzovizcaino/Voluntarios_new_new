@@ -9,6 +9,7 @@ class DatosUser(Base):
     email = Column(String)
     direccion=Column(String)
     telefono=Column(String)
+    chat_id=Column(String)
     tipo_usuario = Column(String)
     config = Column(Boolean, default=False)
     coordinador=Column(Boolean, default=False)

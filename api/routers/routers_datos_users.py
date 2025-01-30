@@ -21,6 +21,7 @@ class Datos_User(BaseModel):
     email: str
     direccion: str
     telefono: str
+    chat_id: str
     tipo_usuario: str
     config: bool
     coordinador: bool=False
