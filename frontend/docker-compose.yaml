@@ -16,7 +16,7 @@ services:
       - n8n-network
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./voluntarios.db:/db/voluntarios.db
+      - C:\Users\desarrollo\Curso-python-GalvinTec\voluntarios_new\Voluntarios_new_new\frontend:/db
     ports:
       - "5678:5678"
     user: "1000:1000"
@@ -37,6 +37,7 @@ services:
 
 volumes:
   n8n_data:
+  db_volume:
 
 networks:
   n8n-network:
