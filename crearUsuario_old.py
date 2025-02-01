@@ -17,9 +17,9 @@ user5 = User(username="user5", password="123")
 
 datosadmin=DatosUser(user_id=1,email="admin@gmail.com", direccion="C/Cuba 10", telefono="675506991",chat_id="",tipo_usuario="admin", config=False, coordinador=False, amigo="")
 
-datosuser1=DatosUser(user_id=2,email="user1@gmail.com", direccion="C/Roma 10", telefono="675506990",chat_id="",tipo_usuario="user", config=False, coordinador=True, amigo="user2")
+datosuser1=DatosUser(user_id=2,email="user1@gmail.com", direccion="C/Roma 10", telefono="675506990",chat_id="",tipo_usuario="user", config=False, coordinador=True, amigo="remi")
 
-datosuser2=DatosUser(user_id=3,email="user2@gmail.com", direccion="C/Lisboa 10", telefono="615917522",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="user1")
+datosuser2=DatosUser(user_id=3,email="user2@gmail.com", direccion="C/Lisboa 10", telefono="615917522",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="antonio")
 
 datosuser3=DatosUser(user_id=4,email="user3@gmail.com", direccion="C/Paris 10", telefono="652946811",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="user101")
 
