@@ -15,11 +15,16 @@ def enviar_correo(destinatario, asunto, mensaje):
     """
     # Configurar el mensaje
     email = MIMEMultipart()
-    email['From'] = "lorenzovizcaino@gmail.com"
+    #email['From'] = "lorenzovizcaino@gmail.com"
+    email['From'] = "lorenzovizcaino74@gmail.com"
     email['To'] = destinatario
     email['Subject'] = asunto
-    remitente = "lorenzovizcaino@gmail.com"
-    contraseña="dpms ufyv ojcd lxar"
+    #remitente = "lorenzovizcaino@gmail.com"
+    #contraseña="dpms ufyv ojcd lxar"
+
+
+    remitente = "lorenzovizcaino74@gmail.com"    
+    contraseña="zctk lbdp uuib rafr"
     
     
     # Agregar el cuerpo del mensaje

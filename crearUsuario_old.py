@@ -21,7 +21,7 @@ datosuser1=DatosUser(user_id=2,email="user1@gmail.com", direccion="C/Roma 10", t
 
 datosuser2=DatosUser(user_id=3,email="user2@gmail.com", direccion="C/Lisboa 10", telefono="615917522",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="antonio")
 
-datosuser3=DatosUser(user_id=4,email="user3@gmail.com", direccion="C/Paris 10", telefono="652946811",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="user101")
+datosuser3=DatosUser(user_id=4,email="user3@gmail.com", direccion="C/Paris 10", telefono="652946811",chat_id="",tipo_usuario="user", config=False, coordinador=False, amigo="")
 
 datosuser4=DatosUser(user_id=5,email="user4@gmail.com", direccion="C/Londres 10", telefono="675506994",chat_id="",tipo_usuario="user", config=False, coordinador=True, amigo="")
 
