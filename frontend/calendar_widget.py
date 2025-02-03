@@ -1,15 +1,34 @@
+"""
+Módulo que implementa un widget de calendario personalizado para Flet.
+Proporciona una interfaz gráfica para seleccionar fechas con soporte para español
+"""
+
 import flet as ft
 import datetime
 import calendar
 import locale
 
 class SpanishCalendar(ft.UserControl):
+    """
+    Widget personalizado que implementa un calendario en español.
+    
+    Args:
+        on_date_selected (callable, optional): Callback para cuando se selecciona una fecha
+        on_change (callable, optional): Callback para cuando cambia el estado del calendario
+        selected_date (str/datetime, optional): Fecha inicial seleccionada
+    
+    El calendario soporta navegación entre meses, selección de fechas,
+    y múltiples formatos de visualización.
+    """
+
     def __init__(self, on_date_selected=None, on_change=None, selected_date=None):
         super().__init__()
         self.current_date = datetime.datetime.now()
         self.selected_date = None
         self.on_date_selected = on_date_selected
         self.on_change = on_change
+
+        # Intentar establecer el locale en español
         try:
             locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
         except:
@@ -25,10 +44,17 @@ class SpanishCalendar(ft.UserControl):
 
     def set_selected_date(self, date):
         """
-        Establece la fecha seleccionada y actualiza la vista del calendario
+        Establece la fecha seleccionada y actualiza la vista del calendario.
         
         Args:
-            date: puede ser un string en formato 'YYYY-MM-DD' o un objeto datetime.date
+            date: Puede ser un string en formato 'YYYY-MM-DD' o un objeto datetime.date
+            
+        Raises:
+            ValueError: Si el formato de fecha no es válido
+            
+        Efectos:
+            - Actualiza la fecha seleccionada
+            - Actualiza la visualización del calendario
         """
         if isinstance(date, str):
             try:
@@ -60,6 +86,17 @@ class SpanishCalendar(ft.UserControl):
 
 
     def create_calendar_grid(self, year, month):
+        """
+        Crea la cuadrícula del calendario para un mes específico.
+        
+        Args:
+            year (int): Año a mostrar
+            month (int): Mes a mostrar
+            
+        Returns:
+            ft.Column: Contenedor con la cuadrícula del calendario
+        """
+
         cal = calendar.monthcalendar(year, month)
         days_header = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
         header_row = ft.Row(
@@ -68,6 +105,15 @@ class SpanishCalendar(ft.UserControl):
         )
 
         def day_clicked(day):
+            """
+            Crea un manejador de eventos para la selección de un día.
+            
+            Args:
+                day (int): Día seleccionado
+                
+            Returns:
+                callable: Función manejadora del evento
+            """
             def handle_click(e):
                 old_date = self.selected_date
                 self.selected_date = datetime.date(year, month, day)
@@ -99,6 +145,7 @@ class SpanishCalendar(ft.UserControl):
                 self.update()
             return handle_click
 
+        # Crear cuadrícula de días
         self.calendar_rows = []
         for week in cal:
             week_buttons = []
@@ -138,7 +185,13 @@ class SpanishCalendar(ft.UserControl):
 
     def format_date_data(self, date):
         """
-        Formatea una fecha dada en el mismo formato que get_selected_date
+        Formatea una fecha en un diccionario con múltiples formatos.
+        
+        Args:
+            date (datetime.date): Fecha a formatear
+            
+        Returns:
+            dict: Diccionario con diferentes representaciones de la fecha
         """
         if date is None:
             return None
@@ -154,6 +207,15 @@ class SpanishCalendar(ft.UserControl):
         }
 
     def change_month(self, delta):
+        """
+        Crea un manejador para cambiar el mes mostrado.
+        
+        Args:
+            delta (int): Cantidad de meses a avanzar/retroceder
+            
+        Returns:
+            callable: Función manejadora del evento
+        """
         def handle_change(e):
             old_date = self.current_date
             self.current_date = self.current_date.replace(day=1)
@@ -171,6 +233,7 @@ class SpanishCalendar(ft.UserControl):
                     'new_year': self.current_date.year
                 })
             
+            # Actualizar vista
             self.month_text.value = self.current_date.strftime("%B %Y").capitalize()
             self.calendar_container.content = self.create_calendar_grid(
                 self.current_date.year, 
@@ -180,6 +243,10 @@ class SpanishCalendar(ft.UserControl):
         return handle_change
 
     def reset_calendar(self):
+        """
+        Reinicia el calendario a su estado inicial.
+        Elimina la selección actual y actualiza la vista.
+        """
         old_date = self.selected_date
         for row in self.calendar_rows:
             for btn in row.controls:
@@ -205,6 +272,13 @@ class SpanishCalendar(ft.UserControl):
         self.update()
 
     def build(self):
+        """
+        Construye la interfaz del calendario.
+        
+        Returns:
+            ft.Container: Contenedor principal del calendario
+        """
+        # Título del mes actual
         self.month_text = ft.Text(
             self.current_date.strftime("%B %Y").capitalize(),
             size=20,
@@ -212,6 +286,7 @@ class SpanishCalendar(ft.UserControl):
             text_align=ft.TextAlign.CENTER
         )
 
+        # Barra de navegación
         navigation = ft.Row(
             controls=[
                 ft.IconButton(ft.icons.ARROW_LEFT, on_click=self.change_month(-1)),
@@ -221,13 +296,16 @@ class SpanishCalendar(ft.UserControl):
             alignment=ft.MainAxisAlignment.CENTER
         )
 
+        # Texto de fecha seleccionada
         self.selected_date_text = ft.Text(size=16, text_align=ft.TextAlign.CENTER)
         
+        # Contenedor del calendario
         self.calendar_container = ft.Container(
             content=self.create_calendar_grid(self.current_date.year, self.current_date.month),
             padding=10
         )
 
+        # Contenedor principal
         return ft.Container(
             content=ft.Column(
                 controls=[
@@ -242,7 +320,7 @@ class SpanishCalendar(ft.UserControl):
 
     def get_selected_date(self):
         """
-        Retorna la fecha seleccionada en varios formatos.
+        Obtiene la fecha seleccionada en múltiples formatos.
         
         Returns:
             dict: Diccionario con la fecha separada en diferentes formatos:

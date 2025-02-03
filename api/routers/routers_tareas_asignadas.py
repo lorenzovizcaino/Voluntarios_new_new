@@ -1,3 +1,8 @@
+"""
+Módulo que define los endpoints de la API para gestionar la asignación de tareas a usuarios.
+Proporciona rutas para crear, consultar y eliminar las relaciones entre tareas y usuarios.
+"""
+
 from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends, APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBearer
@@ -6,18 +11,35 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from ..database import get_db
 from fastapi.encoders import jsonable_encoder
-
 from ..models.tareas_asignadas import TareasAsignadas as ModelTareasAsignadas
 
+
+# Crear instancia del router
 routertareas_asignadas = APIRouter()
 
+
 class TareaAsignada(BaseModel):
-    id: Optional[int]=None
-    tarea_id:int
-    user_id:int
+    """
+    Modelo Pydantic que define la estructura de datos para las operaciones
+    de asignación de tareas.
+    """
+    id: Optional[int] = None  # ID opcional para creación/actualización
+    tarea_id: int            # ID de la tarea a asignar
+    user_id: int            # ID del usuario al que se asigna la tarea
+
 
 @routertareas_asignadas.post('/tareasasignadas', tags=['TareasAsignadas'])
 def create_tarea(tarea_asignada: TareaAsignada, db: Session = Depends(get_db)):
+    """
+    Crea una nueva asignación de tarea a usuario.
+    
+    Args:
+        tarea_asignada (TareaAsignada): Datos de la asignación
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Confirmación de creación o error
+    """
     try:
         new_tarea = ModelTareasAsignadas(**tarea_asignada.model_dump())
         db.add(new_tarea)
@@ -39,11 +61,21 @@ def create_tarea(tarea_asignada: TareaAsignada, db: Session = Depends(get_db)):
                 "detail": str(e)
             }
         )
-#devuelve las tareas de un usuario
-@routertareas_asignadas.get('/tareasasignadas/{user_id}', tags=['TareasAsignadas']) 
+
+
+@routertareas_asignadas.get('/tareasasignadas/{user_id}', tags=['TareasAsignadas'])
 def tareas_usuario(user_id: int, db: Session = Depends(get_db)):
+    """
+    Obtiene todas las tareas asignadas a un usuario específico.
+    
+    Args:
+        user_id (int): ID del usuario
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Lista de tareas asignadas al usuario
+    """
     try:
-        
         data = db.query(ModelTareasAsignadas).filter(
             ModelTareasAsignadas.user_id == user_id
         ).all()
@@ -63,13 +95,21 @@ def tareas_usuario(user_id: int, db: Session = Depends(get_db)):
                 "detail": str(e)
             }
         )
-    
 
-#devuelve los id de usuarios que estan en una tarea
-@routertareas_asignadas.get('/usersasignados/{tarea_id}', tags=['TareasAsignadas']) 
+
+@routertareas_asignadas.get('/usersasignados/{tarea_id}', tags=['TareasAsignadas'])
 def usuario_tareas(tarea_id: int, db: Session = Depends(get_db)):
+    """
+    Obtiene todos los usuarios asignados a una tarea específica.
+    
+    Args:
+        tarea_id (int): ID de la tarea
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Lista de usuarios asignados a la tarea
+    """
     try:
-        
         data = db.query(ModelTareasAsignadas).filter(
             ModelTareasAsignadas.tarea_id == tarea_id
         ).all()
@@ -77,7 +117,6 @@ def usuario_tareas(tarea_id: int, db: Session = Depends(get_db)):
         return JSONResponse(
             status_code=200,
             content={
-                
                 "users": jsonable_encoder(data)
             }
         )
@@ -91,13 +130,19 @@ def usuario_tareas(tarea_id: int, db: Session = Depends(get_db)):
         )
 
 
-
-
-
 @routertareas_asignadas.get('/tareasasignadas/{user_id}/count', tags=['TareasAsignadas'])
 def count_tareas_usuario(user_id: int, db: Session = Depends(get_db)):
+    """
+    Cuenta el número total de tareas asignadas a un usuario.
+    
+    Args:
+        user_id (int): ID del usuario
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Total de tareas asignadas al usuario
+    """
     try:
-        
         count = db.query(ModelTareasAsignadas).filter(
             ModelTareasAsignadas.user_id == user_id
         ).count()
@@ -117,22 +162,42 @@ def count_tareas_usuario(user_id: int, db: Session = Depends(get_db)):
                 "detail": str(e)
             }
         )
-    
+
+
 @routertareas_asignadas.delete('/tareasasignadas/{tarea_id}', tags=['TareasAsignadas'])
 def delete_tarea_asignada(tarea_id: int, db: Session = Depends(get_db)):
-    #para borrar mas de un registro no se utiliza all(), se utiliza delete()
-    data=db.query(ModelTareasAsignadas).filter(ModelTareasAsignadas.tarea_id==tarea_id).delete() 
-         
+    """
+    Elimina todas las asignaciones asociadas a una tarea específica.
+    
+    Args:
+        tarea_id (int): ID de la tarea
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Confirmación de eliminación
+    """
+    # Para borrar más de un registro se utiliza delete() en lugar de all()
+    data = db.query(ModelTareasAsignadas).filter(ModelTareasAsignadas.tarea_id == tarea_id).delete()
     db.commit()
-    return JSONResponse(content={"message":"Se ha eliminado la/s tarea/s asignada/s"})
+    return JSONResponse(content={"message": "Se ha eliminado la/s tarea/s asignada/s"})
 
 
-
-
-
-#endpoint el cual recibe el id_tarea + id_usuario y borrar una tarea_asignada
 @routertareas_asignadas.delete('/tareasasignadas', tags=['TareasAsignadas'])
-def delete_tarea_asignada(tarea_id: int, user_id:int, db: Session = Depends(get_db)):       
-    db.query(ModelTareasAsignadas).filter((ModelTareasAsignadas.tarea_id==tarea_id) & (ModelTareasAsignadas.user_id==user_id)).delete()      
+def delete_tarea_asignada(tarea_id: int, user_id: int, db: Session = Depends(get_db)):
+    """
+    Elimina una asignación específica de tarea a usuario.
+    
+    Args:
+        tarea_id (int): ID de la tarea
+        user_id (int): ID del usuario
+        db (Session): Sesión de base de datos
+    
+    Returns:
+        JSONResponse: Confirmación de eliminación
+    """
+    db.query(ModelTareasAsignadas).filter(
+        (ModelTareasAsignadas.tarea_id == tarea_id) & 
+        (ModelTareasAsignadas.user_id == user_id)
+    ).delete()
     db.commit()
-    return JSONResponse(content={"message":"Se ha eliminado la tarea asignada"})
+    return JSONResponse(content={"message": "Se ha eliminado la tarea asignada"})

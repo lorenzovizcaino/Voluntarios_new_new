@@ -1,3 +1,9 @@
+"""
+Módulo que implementa la vista de asignación de tareas para administradores.
+Permite asignar voluntarios a tareas específicas, considerando su disponibilidad,
+rol de coordinador y otras restricciones del sistema.
+"""
+
 import flet as ft
 import requests
 
@@ -6,18 +12,31 @@ from time import sleep
 from plyer import notification
 
 from admin_view import tarea_para_asignar
-from utils import API_URL_TAREAS, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR, set_selected_tab_index,path_fondo, obtener_tarea_completa, guardar_notificacion
+from utils import (
+    API_URL_TAREAS, get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES,
+    API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_DATOS_USER,
+    API_URL_TAREAS_EDIT_COORDINADOR, set_selected_tab_index, path_fondo,
+    obtener_tarea_completa, guardar_notificacion
+)
 from enviar_email import enviar_correo
 
 
 
 def admin_assign(page: ft.Page):
+    """
+    Función principal que configura la vista de asignación de tareas.
+    
+    Args:
+        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+    """
+    # Configuración inicial de la ventana
     page.window_width = 800
     page.window_height = 900  
-    page.window_center()
-    
+    page.window_center()    
     page.title="Tareas de Voluntariado"
     page.horizontal_alignment=ft.CrossAxisAlignment.CENTER
+
+    # Variables de control
     texto_info=""
     tarea_selecionada_completa=None
     coordinador_ingresado=False
@@ -25,16 +44,24 @@ def admin_assign(page: ft.Page):
     
         
 
-    """
-    la siguiente funcion obtiene los id de todos los usuarios de la base de datos que son validos para
-    la tarea que se esta evaluando en el momento, para ello tiene en cuenta:
-        1.- Que el usuario haya marcado la fecha y el turno en cuestion  como disponible.
-        2.- Que el usuario no tenga asignada ya una tarea para el mismo dia.
-    """    
+     
     def obtener_id_voluntarios_disponibles(tarea_selecionada_completa):
-        nonlocal coordinador_ingresado
+        """
+        Obtiene los IDs de usuarios válidos para una tarea específica.
         
+        Verifica:
+        1. Disponibilidad en la fecha y turno de la tarea
+        2. No tener otra tarea asignada el mismo día
+        3. Rol de coordinador si es necesario
         
+        Args:
+            tarea_selecionada_completa (dict): Información completa de la tarea
+            
+        Returns:
+            list: Lista de IDs de usuarios disponibles, None si hay error
+        """
+
+        nonlocal coordinador_ingresado              
         usuarios=[] 
         usuariosfinales=[]      
         id_tareas_usuario=[] 
@@ -61,6 +88,7 @@ def admin_assign(page: ft.Page):
                     
                     coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
                     
+                    # Filtrar por rol de coordinador
                     if tarea_selecionada_completa["coordinador"] and  coordinador_ingresado==False:                    
                         usuarios.append(user["user_id"])
                         
@@ -146,6 +174,15 @@ def admin_assign(page: ft.Page):
         
 
     def obtener_voluntarios_disponibles(id_voluntarios_disponibles):
+        """
+        Obtiene la información completa de los voluntarios disponibles.
+        
+        Args:
+            id_voluntarios_disponibles (list): Lista de IDs de usuarios
+            
+        Returns:
+            list: Lista con información completa de usuarios disponibles
+        """
         usuarios_disponibles=[]
         for user in id_voluntarios_disponibles:            
             response=requests.get(f"{API_URL_LOGIN}/{user}")
@@ -163,16 +200,22 @@ def admin_assign(page: ft.Page):
 
     
     def mostrar_notificacion_windows(title, message):
-        #Muestra una notificación de Windows
+        """
+        Muestra una notificación del sistema operativo Windows.
+        
+        Args:
+            title (str): Título de la notificación
+            message (str): Mensaje de la notificación
+        """
         try:
             notification.notify(
                 title=title,
                 message=message,
-                app_icon=None,  # e.g. 'C:\\icon_32x32.ico'
+                app_icon=None, 
                 timeout=10,  # segundos
             )
-            # Pequeña pausa para evitar conflictos entre notificaciones
-            sleep(0.5)
+            
+            sleep(0.5)   # Pequeña pausa para evitar conflictos entre notificaciones
         except Exception as e:
             print(f"Error al mostrar notificación: {e}")
 
@@ -183,6 +226,18 @@ def admin_assign(page: ft.Page):
 
     
     def asignar_tarea(e, dato):
+        """
+        Asigna una tarea a un voluntario específico.
+        
+        Args:
+            e: Evento de Flet
+            dato (dict): Información del voluntario seleccionado
+            
+        Efectos:
+            - Actualiza el estado de la tarea en la base de datos
+            - Envía notificación por email
+            - Actualiza la interfaz gráfica
+        """
         
         nonlocal tarea_selecionada_completa, voluntarios_disponibles
         
@@ -219,9 +274,11 @@ def admin_assign(page: ft.Page):
 
         }
         
-
+        # Actualizar base de datos
         response=requests.put(f"{API_URL_TAREAS}/{tarea_selecionada_completa['id']}",json=data_tarea, params=params_tarea)
         response2=requests.post(API_URL_TAREAS_ASIGNADAS, json=data_tarea_asignada)
+        
+        # Preparar y enviar email de notificación
         asunto=f"Nueva tarea de voluntariado asignada el dia {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"
         mensaje=f"""
                 Estimado voluntario:
@@ -236,8 +293,8 @@ def admin_assign(page: ft.Page):
         enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
 
 
-        #notificacion_start
-
+        
+        
         notification_data = {
                 "tarea_name": tarea_selecionada_completa["tarea_name"],
                 "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
@@ -264,14 +321,14 @@ def admin_assign(page: ft.Page):
 
 
 
-        #notificacion_end
+        
 
 
 
 
 
 
-
+        # Actualizar información en pantalla
         tarea_selecionada_completa=obtener_tarea_completa(tarea_para_asignar.tarea_seleccionada["id"])
         
         tarea_para_asignar.tarea_seleccionada['voluntarios_asignados']=tarea_selecionada_completa['voluntarios_asignados']
@@ -287,6 +344,15 @@ def admin_assign(page: ft.Page):
         
         
     def comprobar_duplicidad_usuario_tarea(id_usuario): 
+        """
+        Verifica si un usuario ya está asignado a la tarea.
+        
+        Args:
+            id_usuario (int): ID del usuario a verificar
+            
+        Returns:
+            bool: True si el usuario ya está asignado, False en caso contrario
+        """
         usuarios_tarea=[]
         response=requests.get(f"{API_URL_TAREAS}/{tarea_para_asignar.tarea_seleccionada['id']}")
         tarea=response.json()
@@ -302,7 +368,10 @@ def admin_assign(page: ft.Page):
 
         
     def actualizar_tabla():
-        
+        """
+        Actualiza la tabla de voluntarios disponibles en la interfaz.
+        Muestra información relevante de cada voluntario y opciones de asignación.
+        """
         data_table.rows.clear()
         if tarea_para_asignar.tarea_seleccionada['voluntarios_necesarios']==tarea_para_asignar.tarea_seleccionada['voluntarios_asignados']:
             info.value="Esta tarea ya tiene todos los voluntarios necesarios"
@@ -388,13 +457,14 @@ def admin_assign(page: ft.Page):
         page.update()
 
     def para_atras(e): 
+        """
+        Maneja la navegación hacia atrás en la interfaz.
+        
+        Args:
+            e: Evento de Flet
+        """
         set_selected_tab_index(1)        
-        page.go("/admin")
-
-
-  
-        
-        
+        page.go("/admin")         
         
             
             
@@ -402,11 +472,13 @@ def admin_assign(page: ft.Page):
             
         
 
-      
+    # Definición de elementos de la interfaz   
     flecha=ft.IconButton(ft.icons.ARROW_BACK, tooltip="Atras", icon_color=ft.colors.BLUE_900, icon_size=30, on_click=para_atras)
     texto_atras=ft.Text(value="Atras", size=20, color=ft.colors.BLUE_900)
     atras=ft.Row(controls=[flecha,texto_atras])
     titulo=ft.Text(value="Asignacion de Tareas", size=25, font_family=ft.FontWeight.BOLD)
+    
+    # Información de la tarea seleccionada
     tarea=ft.Text(value=f"TAREA: {tarea_para_asignar.tarea_seleccionada['nombre']}")
     ubicacion=ft.Text(value=f"UBICACIÓN: {tarea_para_asignar.tarea_seleccionada['ubicacion']}")
     fecha=ft.Text(value=f"FECHA: {tarea_para_asignar.tarea_seleccionada['fecha']}")
@@ -422,7 +494,7 @@ def admin_assign(page: ft.Page):
     
 
 
-
+    #definicion de la tabla de datos
     data_table = ft.DataTable(    
         bgcolor=ft.colors.with_opacity(0.8, ft.colors.RED_50),      
         border_radius=8,        
@@ -518,7 +590,7 @@ def admin_assign(page: ft.Page):
 
 
 
-
+    # Configuración de la vista de tabla con scroll
     tabla_con_scroll = ft.ListView(
         controls=[data_table],
         expand=1,
@@ -535,14 +607,7 @@ def admin_assign(page: ft.Page):
 
 
 
-
-
-
-
-
-
-
-
+    # Configuración del contenedor de información
     info=ft.Text(value=texto_info, 
                  color=ft.colors.BLACK, 
                  size=20, 
@@ -559,9 +624,10 @@ def admin_assign(page: ft.Page):
         alignment=ft.alignment.center
     )
 
-
+    # Inicialización de datos
     tarea_selecionada_completa=obtener_tarea_completa(tarea_para_asignar.tarea_seleccionada["id"])
     id_voluntarios_disponibles=obtener_id_voluntarios_disponibles(tarea_selecionada_completa)
+
     if not id_voluntarios_disponibles ==  None:    
         voluntarios_disponibles=obtener_voluntarios_disponibles(id_voluntarios_disponibles)
         actualizar_tabla()
@@ -572,7 +638,7 @@ def admin_assign(page: ft.Page):
         page.update()
 
 
-
+    # Configuración del contenedor principal
     contenedor=ft.Container(
         content=ft.Column(
             controls=[atras,titulo, columna_tarea, subtitulo, contenedor_tabla,  ] + ([container_info] if info.value != "" else [])  # Añade container_info solo si hay valor

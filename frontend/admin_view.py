@@ -1,3 +1,9 @@
+"""
+Módulo principal de la vista de administración de tareas de voluntariado.
+Implementa las funcionalidades para crear, editar, asignar y gestionar tareas,
+incluyendo asignación automática y gestión de voluntarios.
+"""
+
 from datetime import datetime
 import os
 import flet as ft
@@ -5,13 +11,23 @@ import requests
 import time
 from openpyxl import Workbook
 from calendar_widget import SpanishCalendar
-from utils import API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_LOGIN,API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR,API_URL_DATOS_USER, API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, API_URL_LOGIN_DATOS, get_selected_tab_index, path_fondo, obtener_tarea_completa
+from utils import (
+    API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_LOGIN,
+    API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR, API_URL_DATOS_USER,
+    API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, API_URL_LOGIN_DATOS,
+    get_selected_tab_index, path_fondo, obtener_tarea_completa
+)
 from enviar_email import enviar_correo
 
 class TareaSelecionada:
+    """
+    Clase para mantener el estado de una tarea seleccionada.
+    Se usa para compartir información entre diferentes vistas.
+    """
     def __init__(self):
         self.tarea_seleccionada = None
 
+# Instancias globales para compartir estado entre vistas
 tarea_para_asignar = TareaSelecionada()
 tarea_para_editar = TareaSelecionada()
 
@@ -19,19 +35,25 @@ tarea_para_editar = TareaSelecionada()
 
 
 def admin(page: ft.Page):
+    """
+    Función principal que implementa la vista de administración.
+    
+    Args:
+        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+        
+    Returns:
+        ft.View: Vista principal de administración
+    """
+    # Configuración inicial de la ventana
     page.window_width = 1050
     page.window_height = 900  
     page.window_center()
-
     page.bgcolor = ft.colors.TRANSPARENT
-    page.window_bgcolor = ft.colors.TRANSPARENT
-
-
-
-
-    
+    page.window_bgcolor = ft.colors.TRANSPARENT    
     page.title="Tareas de Voluntariado"
     page.horizontal_alignment=ft.CrossAxisAlignment.CENTER
+
+    # Variables de control
     fecha_info = ft.Text(size=16)
     titulo=ft.Text(value="Tareas de Voluntariado", size=24, color=ft.colors.BLACK)
     year_seleccionado=None
@@ -42,11 +64,13 @@ def admin(page: ft.Page):
 
     
     
-    
+    # Información de turnos
     leyenda2=ft.Text(value="Turno 1: de 09:00 a 12:00    Turno 2: de 12:00 a 15:00     Turno 3: de 15:00 a 18:00     Turno 4: de 18:00 a 21:00",
                         size=15,
                         weight=ft.FontWeight.BOLD)
 
+    
+    # Campos de entrada para crear tareas
     nombre_tarea = ft.Container(
         content=ft.TextField(
             label="Nombre de la tarea (mínimo 3 caracteres)",
@@ -69,15 +93,16 @@ def admin(page: ft.Page):
         
     
     )
-    
-
-
-    
-    
 
 
     
     def on_date_selected(date_info):        
+        """
+        Maneja la selección de fecha en el calendario.
+        
+        Args:
+            date_info (dict): Información de la fecha seleccionada
+        """
         if date_info:
             nonlocal year_seleccionado, month_seleccionado, day_seleccionado
             year_seleccionado = date_info['year']
@@ -89,6 +114,9 @@ def admin(page: ft.Page):
     
 
     def boton_deshabilitado():
+        """
+        Configura el estado deshabilitado del botón de guardar tarea.
+        """
         boton_guardar_tarea.disabled=True
         boton_guardar_tarea.style= ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=5),
@@ -98,6 +126,9 @@ def admin(page: ft.Page):
         
         
     def boton_habilitado():
+        """
+        Configura el estado habilitado del botón de guardar tarea.
+        """
         boton_guardar_tarea.disabled=False
         boton_guardar_tarea.style= ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=5),
@@ -108,7 +139,11 @@ def admin(page: ft.Page):
 
     
 
-    def estado_boton_guardar_tarea():              
+    def estado_boton_guardar_tarea():      
+        """
+        Verifica y actualiza el estado del botón de guardar tarea
+        según la validez de los campos requeridos.
+        """        
         nonlocal calendario_valido
         nombre_valido = bool(nombre_tarea.content.value and nombre_tarea.content.value.strip())
         ubicacion_valida = bool(ubicacion_tarea.content.value and ubicacion_tarea.content.value.strip())
@@ -122,7 +157,7 @@ def admin(page: ft.Page):
             boton_deshabilitado()            
         page.update()    
 
-
+    # Manejadores de eventos para los campos de entrada
     def on_evento_nombre_tarea(e):        
         estado_boton_guardar_tarea()
 
@@ -141,11 +176,19 @@ def admin(page: ft.Page):
         estado_boton_guardar_tarea()
 
     def guardar_tarea(e):
+        """
+        Guarda una nueva tarea en el sistema.
+        
+        Args:
+            e: Evento de Flet
+        
+        Efectos:
+            - Crea una nueva tarea en la base de datos
+            - Actualiza la interfaz
+            - Muestra notificación de resultado
+        """
         nonlocal calendario_valido
-        mensaje_boton_guardar = ""
-        
-        
-        
+        mensaje_boton_guardar = ""      
         
         data = {
             "user_id": get_id_usuario_logeado(), 
@@ -166,6 +209,7 @@ def admin(page: ft.Page):
         else:
             mensaje_boton_guardar = "Error al guardar, la tarea necesita un minimo de 3 caracteres"
         
+        # Mostrar notificación
         snack_bar = ft.SnackBar(content=ft.Text(mensaje_boton_guardar))
         page.overlay.append(snack_bar)
         snack_bar.open = True
@@ -184,8 +228,6 @@ def admin(page: ft.Page):
 
     # Crear instancia del calendario
     calendar = SpanishCalendar(on_date_selected)
-
-
     check_coordinador=ft.Checkbox(label="Necesita Coordinador", value=False)
 
     lista_turnos = ft.Dropdown(
@@ -247,6 +289,7 @@ def admin(page: ft.Page):
                                 ),
                             )
     
+    # Organización de elementos en contenedores
     conte=ft.Container(height=20)
     contenedor=ft.Container(ft.Column(controls=[check_coordinador, lista_turnos, voluntarios_necesarios, boton_guardar_tarea],spacing=30), padding=30)
     
@@ -261,8 +304,7 @@ def admin(page: ft.Page):
             alignment=ft.MainAxisAlignment.CENTER
         ),
         bgcolor=ft.colors.with_opacity(0.8, ft.colors.RED_50),
-        width=800,
-        
+        width=800,        
         border=ft.border.all(width=1, color=ft.colors.BLACK)
 )
     
@@ -282,7 +324,7 @@ def admin(page: ft.Page):
         
         )
 
-
+    # Asignación de manejadores de eventos
     nombre_tarea.on_change = on_evento_nombre_tarea
     ubicacion_tarea.on_change = on_evento_ubicacion_tarea
     lista_turnos.on_change = on_evento_lista_turnos
@@ -302,6 +344,12 @@ def admin(page: ft.Page):
     lista_para_tabla=[]
 
     def cargar_datos():
+        """
+        Carga las tareas existentes desde la base de datos.
+        
+        Returns:
+            dict: Datos de las tareas o None si hay error
+        """
         
         try:
             response=requests.get(API_URL_TAREAS)
@@ -316,7 +364,14 @@ def admin(page: ft.Page):
             print(f"Error en la conexión: {str(e)}")
             return None
         
-    def borrar_registro(e, id):        
+    def borrar_registro(e, id):     
+        """
+        Elimina una tarea y gestiona las notificaciones asociadas.
+        
+        Args:
+            e: Evento de Flet
+            id (int): ID de la tarea a eliminar
+        """  
         tarea_selecionada_completa=obtener_tarea_completa(id)
         for registro in lista_para_tabla:
             if registro["id"] == id:
@@ -347,7 +402,7 @@ def admin(page: ft.Page):
 
                     enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
 
-                    #notificacion_start
+                    # Guardar notificación en el sistema
                     notification_data = {
                             "tarea_name": tarea_selecionada_completa["tarea_name"],
                             "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
@@ -359,26 +414,38 @@ def admin(page: ft.Page):
                         
                     # Guardar la notificación para mostrarla cuando el usuario haga login
                     guardar_notificacion(user, notification_data, alta_baja_tarea=False)
-                    #notificacion_end
-
-
-
-
-
-                               
+                                                   
                 break  
         cuadro_dialogo.open = False     
         actualizar_tabla()
 
-    def asignar_tarea(e, dato):        
+    def asignar_tarea(e, dato):      
+        """
+        Prepara la asignación de una tarea y navega a la vista de asignación.
+        
+        Args:
+            e: Evento de Flet
+            dato (dict): Datos de la tarea a asignar
+        """  
         tarea_para_asignar.tarea_seleccionada=dato              
         page.go("/admin/assign")
 
     def editar_tarea(e, tarea):
+        """
+        Prepara la edición de una tarea y navega a la vista de edición.
+        
+        Args:
+            e: Evento de Flet (no utilizado)
+            tarea (dict): Datos de la tarea a editar
+        """
         tarea_para_editar.tarea_seleccionada=tarea            
         page.go("/admin/edit")
 
     def crear_lista_tabla():    
+        """
+        Crea la lista de tareas para mostrar en la tabla.
+        Actualiza la visualización de la tabla.
+        """
         dicionario_base_datos=cargar_datos()
         lista_para_tabla.clear()
         for tarea in dicionario_base_datos:
@@ -408,6 +475,12 @@ def admin(page: ft.Page):
 
 
     def guardar_excel(e):
+        """
+        Exporta los datos de la tabla a un archivo Excel.
+        
+        Args:
+            e: Evento de Flet
+        """
         wb = Workbook()
         ws = wb.active
         ws.title = "Tareas Voluntariado"
@@ -459,7 +532,10 @@ def admin(page: ft.Page):
         page.update()
         
     def actualizar_tabla():
-        
+        """
+        Actualiza la visualización de la tabla de tareas.
+        Aplica formatos y colores según el estado de las tareas.
+        """
         data_table.rows.clear()
 
         for dato in lista_para_tabla:
@@ -562,23 +638,41 @@ def admin(page: ft.Page):
     
     def show_dialog(e, id):
         """
+        Muestra el diálogo de confirmación para borrar una tarea.
         En show_dialog, en lugar de solo establecer open = True, primero actualizamos el manejador de eventos (on_click) del botón Aceptar con una nueva función lambda que tiene el ID correcto.
         actions[0] se refiere al primer botón en el array de actions del AlertDialog (el botón "Aceptar").
+        
+        Args:
+            e: Evento de Flet (no utilizado)
+            id (int): ID de la tarea a borrar
         """
+        
+        
         cuadro_dialogo.actions[0].on_click = lambda e, id=id: borrar_registro(e, id)
         cuadro_dialogo.open = True
         page.update()
 
     def close_dialog(e):
+        """Cierra el diálogo de confirmación."""
         cuadro_dialogo.open = False
         page.update()
 
-    def cancelar_clicked(e):        
+    def cancelar_clicked(e):   
+        """Maneja el evento de cancelar en el diálogo."""     
         close_dialog(e)
         page.update()
 
 
     def obtener_id_voluntarios_disponibles2(tarea_completa):
+        """
+        Obtiene los IDs de voluntarios disponibles para una tarea específica.
+        
+        Args:
+            tarea_completa (dict): Información completa de la tarea
+            
+        Returns:
+            list: Lista de IDs de voluntarios disponibles, None si hay error
+        """
         usuarios = []
         usuariosfinales = []
         id_tareas_usuario = []
@@ -627,7 +721,7 @@ def admin(page: ft.Page):
         except Exception as e:
             print(f"Error en la conexión1: {str(e)}")
             return None
-        print(f"usuarios1:{usuarios}")
+        
         usuariosfinales = usuarios.copy()
         fecha_tarea = f"{tarea_completa['day']}/{tarea_completa['month']}/{tarea_completa['year']}"
 
@@ -662,9 +756,13 @@ def admin(page: ft.Page):
         return usuariosfinales
     
     def asignar_tarea_autoasignar(tarea_completa, id_voluntario):
+        """
+        Asigna automáticamente una tarea a un voluntario.
         
-        
-
+        Args:
+            tarea_completa (dict): Información completa de la tarea
+            id_voluntario (int): ID del voluntario a asignar
+        """      
 
         data_tarea = {
                 "id": tarea_completa["id"],
@@ -691,9 +789,11 @@ def admin(page: ft.Page):
 
         }
         
-
+        # Actualizar asignaciones
         response=requests.put(f"{API_URL_TAREAS}/{tarea_completa['id']}",json=data_tarea, params=params_tarea)
         response2=requests.post(API_URL_TAREAS_ASIGNADAS, json=data_tarea_asignada)
+        
+        # Enviar notificaciones
         asunto=f"Nueva tarea de voluntariado asignada el dia {tarea_completa["day"]}/{tarea_completa["month"]}/{tarea_completa["year"]}"
         mensaje=f"""
                 Estimado voluntario:
@@ -706,7 +806,8 @@ def admin(page: ft.Page):
                 """
 
         enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
-        #notificacion_start
+
+        # Guardar notificación para mostrarla cuando el usuario haga login
         notification_data = {
                 "tarea_name": tarea_completa["tarea_name"],
                 "tarea_ubicacion": tarea_completa["tarea_ubicacion"],
@@ -716,20 +817,38 @@ def admin(page: ft.Page):
                 "turno": tarea_completa["turno"]
             }
             
-        # Guardar la notificación para mostrarla cuando el usuario haga login
+        
         guardar_notificacion(id_voluntario, notification_data, alta_baja_tarea=True)
-        #notificacion_end
+        
 
         
     
     def obtener_amigo(id_usuario):
-        #obtener el amigo del id_usuario
+        """
+        Obtiene el amigo asignado a un usuario.
+        
+        Args:
+            id_usuario (int): ID del usuario
+            
+        Returns:
+            str: Nombre del amigo o "no tiene amigo asignado"
+        """
         response_datos_usuario=requests.get(f"{API_URL_DATOS_USER}/{id_usuario}")
         data_amigo=response_datos_usuario.json()
         amigo=data_amigo["amigo"] or "no tiene amigo asignado"
         return amigo
     
     def comprobar_amigo(id_usuario):
+        """
+        Verifica si existe una relación de amistad recíproca.
+        
+        Args:
+            id_usuario (int): ID del usuario a verificar
+            
+        Returns:
+            int: ID del amigo si la relación es recíproca, None en caso contrario
+        """
+
         #obtenemos username del usuario
         response_datos_usuario=requests.get(f"{API_URL_LOGIN}/{id_usuario}")
         data_usuario=response_datos_usuario.json()
@@ -750,7 +869,8 @@ def admin(page: ft.Page):
             id_amigo=data_response_id_amigo["id"]
             #con la id_amigo vemos si la amistad es reciproca con id_usuario
             amigo_del_amigo=obtener_amigo(id_amigo)
-        #si el amigo del amigo_del_usuario es el propio amigo, es decir amistad reciproca devuelves el id del amigo del usuario
+
+        # Retornar id_amigo solo si la amistad es recíproca    
         if amigo_del_amigo==username_usuario:
             return id_amigo
         else:
@@ -765,7 +885,14 @@ def admin(page: ft.Page):
 
 
     def auto_asignar_tareas(e):
+        """
+        Realiza la asignación automática de tareas a voluntarios.
+        Considera amistades recíprocas y coordinadores necesarios.
         
+        Args:
+            e: Evento de Flet
+        """
+        # Configurar barra de progreso
         barra_progreso = ft.ProgressBar(width=800, color="green", bgcolor="#eeeeee")
         texto_barra_progreso = ft.Text("Iniciando asignación de tareas...", size=16)
         
@@ -826,6 +953,7 @@ def admin(page: ft.Page):
         
         tarea_actual = 0
         
+        # Procesar cada tarea
         for lista in lista_para_tabla:
             lista_usuarios_tareas = []
             lista_coordinadores_tareas = []
@@ -854,7 +982,7 @@ def admin(page: ft.Page):
 
 
 
-                
+                # Separar voluntarios por rol
                 for id_voluntario in id_voluntarios_disponibles:
                     response2=requests.get(f"{API_URL_DATOS_USER}/{id_voluntario}")                
                     user_data2=response2.json()
@@ -866,7 +994,7 @@ def admin(page: ft.Page):
                
 
                 
-
+                # Verificar estado del coordinador
                 response2=requests.get(f"{API_URL_TAREAS}/{tarea_completa['id']}")
                 tarea_consulta=response2.json()                    
                 coordinador_ingresado=tarea_consulta["coordinador_Asignado"]
@@ -882,7 +1010,7 @@ def admin(page: ft.Page):
                     asignar_tarea_autoasignar(tarea_completa, lista_coordinadores_tareas[0]['user_id'])
                     
                     id_amigo=comprobar_amigo(lista_coordinadores_tareas[0]['user_id'])
-                    print(f"id_amigo: {id_amigo}")
+                    
                     
 
 
@@ -890,16 +1018,11 @@ def admin(page: ft.Page):
                     requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_completa["id"]}",params={"coordinador_Asignado": True})
 
                     # voluntarios_assignados si se asigna un coordinador ya cuenta como voluntario
-                    voluntarios_assignados+=1         
-                
+                    voluntarios_assignados+=1     
 
 
                 
-
-
-
-                
-                    
+                # Asignar voluntarios rasos 
                 voluntarios_restantes = voluntarios_necesarios - voluntarios_assignados
                 if voluntarios_restantes >= len(id_voluntarios_rasos):
                     for voluntario in id_voluntarios_rasos:
@@ -922,7 +1045,7 @@ def admin(page: ft.Page):
                             break
 
 
-
+                    # Asignar voluntarios por número de tareas acumuladas                    
                     for voluntario in id_voluntarios_rasos:
                         
                         response_contar = requests.get(f"{API_URL_TAREAS_ASIGNADAS}/{voluntario}/count")
@@ -936,7 +1059,7 @@ def admin(page: ft.Page):
                         texto_barra_progreso.value = f"Asignando voluntario {i+1}/{voluntarios_restantes} a la tarea: {lista['nombre']}"
                         page.update()
         
-        
+        # Finalizar asignación
         barra_progreso.value = 1
         texto_barra_progreso.value = "¡Asignación de tareas completada!"
         page.update()
@@ -955,7 +1078,7 @@ def admin(page: ft.Page):
 
 
 
-
+    # Configuración de componentes de la interfaz
     titulo_asignar_tareas=ft.Text(value="Listado de Tareas:", size=18, color=ft.colors.BLACK)
     
     
@@ -972,7 +1095,7 @@ def admin(page: ft.Page):
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,)
 
     
-
+    # Configuración de la tabla de datos
     data_table = ft.DataTable(
     
         bgcolor=ft.colors.with_opacity(0.8, ft.colors.RED_50),      
@@ -1133,6 +1256,7 @@ def admin(page: ft.Page):
         ],
     )
 
+    # Configuración del botón de auto-asignación
     boton_auto_asignar_tareas=ft.ElevatedButton(text="Auto asignar Tareas",
                             width=300,
                             height=50,
@@ -1151,7 +1275,7 @@ def admin(page: ft.Page):
                                   alignment=ft.alignment.center_right)
     
 
-
+    # Organización final de la interfaz
     contenido_asignar_tareas = ft.Container(
         content=ft.Column(
             controls=[row_cabecera, contenedor_tabla, cuadro_dialogo, contenedor_boton],
@@ -1165,17 +1289,9 @@ def admin(page: ft.Page):
 
 
     crear_lista_tabla()
-    
 
 
-
-        
-
-
-    
-
-
-
+    # Configuración de pestañas
     tabs=ft.Tabs(
         selected_index=get_selected_tab_index(),
         animation_duration=300,
@@ -1209,12 +1325,6 @@ def admin(page: ft.Page):
         ),
         expand=True
     )
-
-
-
-
-
-
 
 
     return ft.View("/admin", controls=[titulo,main_container])

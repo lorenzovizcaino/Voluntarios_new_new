@@ -1,3 +1,8 @@
+"""
+Módulo de autenticación que maneja el login de usuarios y la gestión de notificaciones.
+Implementa la vista de inicio de sesión y determina el tipo de usuario para el enrutamiento.
+"""
+
 from pathlib import Path
 import flet as ft
 import json
@@ -8,23 +13,40 @@ from plyer import notification
 from utils import API_URL_LOGIN, API_URL_DATOS_USER, set_id_usuario_logeado,path_fondo
 
 def login(page: ft.Page):
+    """
+    Función principal que implementa la vista de login.
+    
+    Args:
+        page (ft.Page): Objeto página de Flet
+        
+    Returns:
+        ft.View: Vista de login configurada
+    """
+    # Configuración inicial de la ventana
     page.window_width = 400
     page.window_height = 400
     page.window_center()
 
 
 
-    #notificacion_start
+    
     def check_and_show_notifications(user_id):
+        """
+        Verifica y muestra las notificaciones pendientes para un usuario.
         
-        #Verifica y muestra las notificaciones pendientes para un usuario
+        Args:
+            user_id (int): ID del usuario que inicia sesión
+            
+        Efectos:
+            - Lee el archivo de notificaciones del usuario
+            - Muestra las notificaciones pendientes
+            - Elimina el archivo de notificaciones después de mostrarlas
+        """    
         
         try:
             notifications_file = Path(f"notifications/user_{user_id}_notifications.json")
-
             # Ruta al icono
-            icon_path = Path("assets/images/icono.ico")
-            
+            icon_path = Path("assets/images/icono.ico")            
             # Convertir la ruta del icono a string absoluto
             icon_absolute_path = str(icon_path.absolute())
             
@@ -41,8 +63,8 @@ def login(page: ft.Page):
                             app_icon=icon_absolute_path,
                             timeout=10,
                         )
-                        # Pequeña pausa entre notificaciones
-                        sleep(0.5)
+                        
+                        sleep(0.5) # Pausa entre notificaciones
                     except Exception as e:
                         print(f"Error al mostrar notificación: {e}")
                         
@@ -51,10 +73,24 @@ def login(page: ft.Page):
                 
         except Exception as e:
             print(f"Error al verificar notificaciones: {e}")
-    #notificacion_end
+    
 
     
     def acceder(e):
+        """
+        Maneja el proceso de inicio de sesión.
+        
+        Args:
+            e: Evento de Flet
+            
+        Efectos:
+            - Valida credenciales contra el backend
+            - Establece el ID de usuario en sesión
+            - Redirecciona según el tipo de usuario
+            - Muestra notificaciones pendientes
+            - Actualiza mensajes de error si los hay
+        """
+
         username = username_field.value
         password = password_field.value
         try:          
@@ -64,7 +100,7 @@ def login(page: ft.Page):
                 "password": password
                 }          
             
-            
+            # Verificar credenciales
             response = requests.get(API_URL_LOGIN, params=params)
             user_data = response.json()    
             if response.status_code ==200:
@@ -72,10 +108,12 @@ def login(page: ft.Page):
                 id=user_data["id_user"]
                 set_id_usuario_logeado(user_data["id_user"])
 
+                # Obtener tipo de usuario
                 url = f"{API_URL_DATOS_USER}/{id}"                
                 response2=requests.get(url)                
                 user_data2=response2.json()
 
+                # Redireccionar según tipo de usuario
                 if user_data2["tipo_usuario"] == "user":                     
                     page.go("/user")
                     #ver notificaciones pendientes
@@ -90,6 +128,7 @@ def login(page: ft.Page):
             error_text.value = f"Error de conexión: {ex}"
             page.update()
 
+    # Componentes de la interfaz
     titulo = ft.Text("Login", size=24, weight=ft.FontWeight.BOLD)
 
     username_field = ft.TextField(label="Usuario")
@@ -107,6 +146,7 @@ def login(page: ft.Page):
     
     error_text = ft.Text("", color="red")
 
+    # Organización de elementos en la interfaz
     row_titulo = ft.Row(controls=[titulo], 
                         alignment="center")
 

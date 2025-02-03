@@ -1,22 +1,42 @@
+"""
+Módulo que implementa la vista de edición de tareas para administradores.
+Permite modificar todos los aspectos de una tarea existente, incluyendo
+la gestión de voluntarios asignados y coordinadores.
+"""
+
 import flet as ft
 import requests
 
 from admin_view import tarea_para_editar
-from utils import API_URL_TAREAS, API_URL_TAREAS_BORRAR, guardar_notificacion, API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR,get_id_usuario_logeado, API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT, set_selected_tab_index,path_fondo
+from utils import (
+    API_URL_TAREAS, API_URL_TAREAS_BORRAR, guardar_notificacion,
+    API_URL_DATOS_USER, API_URL_TAREAS_EDIT_COORDINADOR, get_id_usuario_logeado,
+    API_URL_TURNOS_DISPONIBLES, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS,
+    API_URL_TAREAS_EDIT, set_selected_tab_index, path_fondo
+)
 from enviar_email import enviar_correo
 from calendar_widget import SpanishCalendar
 
 
 
 def admin_edit(page: ft.Page):
+    """
+    Función principal que configura la vista de edición de tareas.
+    
+    Args:
+        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+    """
+    # Configuración inicial de la ventana
+
     page.window_width = 1050
     page.window_height = 900  
     page.window_center()
     
     page.title="Tareas de Voluntariado"
     page.horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    tarea_selecionada_completa=None
 
+    # Variables de control
+    tarea_selecionada_completa=None
     year_seleccionado=None
     month_seleccionado=None
     day_seleccionado=None
@@ -24,6 +44,7 @@ def admin_edit(page: ft.Page):
     id_voluntarios_asignados=[]
     voluntarios_asignados=[]
 
+    # Indicador de carga para operaciones largas
     indicador_carga = ft.ProgressRing(width=100, height=100, stroke_width=8)
     overlay_carga = ft.Container(
             content=indicador_carga,
@@ -34,7 +55,12 @@ def admin_edit(page: ft.Page):
         )
 
     def obtener_tarea_completa():
+        """
+        Obtiene la información completa de la tarea seleccionada.
         
+        Returns:
+            dict: Datos completos de la tarea o None si hay error
+        """
         try: 
 
             response=requests.get(f"{API_URL_TAREAS}/{tarea_para_editar.tarea_seleccionada["id"]}")
@@ -49,7 +75,7 @@ def admin_edit(page: ft.Page):
             print(f"Error en la conexión: {str(e)}")
             return None
         
-
+    # Obtener datos iniciales de la tarea
     tarea_selecionada_completa=obtener_tarea_completa()
     
     
@@ -59,12 +85,19 @@ def admin_edit(page: ft.Page):
 
 
     def montar_contenido_edit():
-
+        """
+        Construye y configura todos los elementos de la interfaz de edición.
         
-
-
-
-        def on_date_selected(date_info):              
+        Returns:
+            ft.Container: Contenedor principal con todos los elementos de la interfaz
+        """      
+        def on_date_selected(date_info): 
+            """
+            Maneja la selección de fechas en el calendario.
+            
+            Args:
+                date_info (dict): Información de la fecha seleccionada
+            """             
             nonlocal year_seleccionado, month_seleccionado, day_seleccionado,calendario_cambiado
             calendario_cambiado=True   
             if date_info:                
@@ -75,17 +108,28 @@ def admin_edit(page: ft.Page):
 
 
         def guardar_tarea(e):
+            """
+            Guarda los cambios realizados en la tarea.
+            
+            Args:
+                e: Evento de Flet
+                
+            Efectos:
+                - Actualiza la tarea en la base de datos
+                - Gestiona la reasignación de voluntarios si es necesario
+                - Muestra notificaciones de éxito o error
+            """
             nonlocal year_seleccionado, month_seleccionado, day_seleccionado,calendario_cambiado,tarea_selecionada_completa
             overlay_carga.visible = True
             page.update()
             try:
+                # Inicialización de variables para voluntarios
                 id_voluntario_Asignado_1=None
                 id_voluntario_Asignado_2=None
                 id_voluntario_Asignado_3=None
                 id_voluntario_Asignado_4=None
                 id_voluntario_Asignado_5=None
-                voluntarios_asignados=0
-                
+                voluntarios_asignados=0                
                 bandera=True
                 
                 # los 3 proximos if's
@@ -109,7 +153,6 @@ def admin_edit(page: ft.Page):
                                 id_voluntario_Asignado_4=tarea_selecionada_completa["id_voluntario_Asignado_4"]
                                 id_voluntario_Asignado_5=tarea_selecionada_completa["id_voluntario_Asignado_5"]
                                 voluntarios_asignados=tarea_selecionada_completa["voluntarios_asignados"]
-                                
                                 bandera=False
 
             
@@ -125,8 +168,7 @@ def admin_edit(page: ft.Page):
                     "month": month_seleccionado,
                     "day": day_seleccionado,
                     "turno": lista_turnos.value,
-                    "voluntarios_necesarios": lista_voluntarios_necesarios.value,
-                    #"voluntarios_asignados": voluntarios_asignados,
+                    "voluntarios_necesarios": lista_voluntarios_necesarios.value,                    
                     "id_voluntario_Asignado_1":id_voluntario_Asignado_1,
                     "id_voluntario_Asignado_2":id_voluntario_Asignado_2,
                     "id_voluntario_Asignado_3":id_voluntario_Asignado_3,
@@ -140,7 +182,8 @@ def admin_edit(page: ft.Page):
                 if bandera:
                     #poner a False que el coordinador esta asignado si el usuario es coordinador
                     requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": False})
-                
+                    
+                    # Gestionar eliminación de voluntarios
                     voluntarios_para_borrar=[]
                     for i in range(1,6):
                         voluntario=f"id_voluntario_Asignado_{i}"
@@ -153,11 +196,14 @@ def admin_edit(page: ft.Page):
                             
                     for voluntario_para_borrar in voluntarios_para_borrar:
                         borrar_voluntario(e,voluntario_para_borrar)
+
+                # Mostrar mensaje de resultado
                 if response.status_code==200:
                     texto_snack_bar= f"Se ha modificado correctamente la Tarea {edit_tarea.value} del dia {day_seleccionado}/{month_seleccionado}/{year_seleccionado}"
                     para_atras(e)
                 else:
                     texto_snack_bar="No se ha modificado correctamente la Tarea, asegurese de que nombre de Tarea y Ubicacion tengan minimo 3 caracteres"
+                
                 snack_bar = ft.SnackBar(content=ft.Text(texto_snack_bar))
                 page.overlay.append(snack_bar)
                 snack_bar.open = True
@@ -173,7 +219,14 @@ def admin_edit(page: ft.Page):
 
         
         
-        def borrar_voluntario(e, id):          
+        def borrar_voluntario(e, id):   
+            """
+            Elimina un voluntario de la tarea y gestiona las notificaciones.
+            
+            Args:
+                e: Evento de Flet
+                id (int): ID del voluntario a eliminar
+            """       
 
             #poner a False que el coordinador esta asignado si el usuario es coordinador
             response2=requests.get(f"{API_URL_DATOS_USER}/{id}")                
@@ -181,7 +234,7 @@ def admin_edit(page: ft.Page):
             if user_data2["coordinador"]:
                 requests.put(f"{API_URL_TAREAS_EDIT_COORDINADOR}/{tarea_selecionada_completa["id"]}",params={"coordinador_Asignado": False})
 
-                
+            # Eliminar asignaciones    
             params_tarea = {
                 "id_voluntario": id
             }
@@ -193,6 +246,8 @@ def admin_edit(page: ft.Page):
 
             requests.put(f"{API_URL_TAREAS_BORRAR}/{tarea_selecionada_completa['id']}", params=params_tarea)
             requests.delete(f"{API_URL_TAREAS_ASIGNADAS}", params=params_tareaasignada)                 
+            
+            # Enviar notificaciones
             asunto=f"Cancelada la tarea de voluntariado asignada el dia {tarea_selecionada_completa["day"]}/{tarea_selecionada_completa["month"]}/{tarea_selecionada_completa["year"]}"
             mensaje=f"""
                     Estimado voluntario:
@@ -206,7 +261,7 @@ def admin_edit(page: ft.Page):
 
             enviar_correo("antoniosantaballa@gmail.com",asunto, mensaje)
 
-            #notificacion_start
+            # Guardar notificación en el sistema para mostrarla cuando el usuario haga login
             notification_data = {
                     "tarea_name": tarea_selecionada_completa["tarea_name"],
                     "tarea_ubicacion": tarea_selecionada_completa["tarea_ubicacion"],
@@ -216,17 +271,17 @@ def admin_edit(page: ft.Page):
                     "turno": tarea_selecionada_completa["turno"]
                 }
                 
-            # Guardar la notificación para mostrarla cuando el usuario haga login
-            guardar_notificacion(id, notification_data, alta_baja_tarea=False)
-            #notificacion_end
-
-
+            
+            guardar_notificacion(id, notification_data, alta_baja_tarea=False)          
             
             actualizar_tabla_voluntarios() 
                 
                 
         
-        def actualizar_tabla_voluntarios():            
+        def actualizar_tabla_voluntarios(): 
+            """
+            Actualiza la tabla de voluntarios asignados en la interfaz.
+            """           
             nonlocal id_voluntarios_asignados, voluntarios_asignados, tarea_selecionada_completa
             
             id_voluntarios_asignados = []
@@ -294,16 +349,16 @@ def admin_edit(page: ft.Page):
             
             
 
-
+        # Configuración de elementos de la interfaz
         label_tarea=ft.Text(" Tarea: (mínimo 3 caracteres)",size=19, font_family=ft.FontWeight.BOLD)
         edit_tarea=ft.TextField(value=tarea_selecionada_completa["tarea_name"], bgcolor="#FFE6CA", width=400,)
         label_ubicacion=ft.Text(" Ubicación: (mínimo 3 caracteres)",size=19, font_family=ft.FontWeight.BOLD)
         edit_ubicacion=ft.TextField(value=tarea_selecionada_completa["tarea_ubicacion"], bgcolor="#FFE6CA", width=400,)
+        
+        # Configuración del calendario
         calendario=SpanishCalendar(on_date_selected=on_date_selected,selected_date=f"{tarea_selecionada_completa['year']}-{tarea_selecionada_completa['month']}-{tarea_selecionada_completa['day']}")
-        
-       
-        
-
+                       
+        # Configuración de selección de turno
         label_turno=ft.Text(" Turno:",size=19, font_family=ft.FontWeight.BOLD)
         lista_turnos = ft.Dropdown(
         width=400,
@@ -325,6 +380,7 @@ def admin_edit(page: ft.Page):
         value=tarea_selecionada_completa['turno']
         )
 
+        # Configuración de número de voluntarios
         label_num_voluntarios=ft.Text(" Numero de voluntarios:",size=19, font_family=ft.FontWeight.BOLD)
         lista_voluntarios_necesarios = ft.Dropdown(
             width=400,
@@ -348,8 +404,11 @@ def admin_edit(page: ft.Page):
             value=tarea_selecionada_completa['voluntarios_necesarios']
         )
 
+        # Checkbox para coordinador
         check_coordinador=ft.Checkbox(label="Necesita coordinador", value=tarea_selecionada_completa["coordinador"], scale=1.35)
 
+
+        # Configuración de la tabla de voluntarios
         label_voluntarios_Asignados=ft.Text(" Voluntarios asignados:",size=19, font_family=ft.FontWeight.BOLD)
         data_table = ft.DataTable(    
             bgcolor="#FFE6CA",   
@@ -413,7 +472,7 @@ def admin_edit(page: ft.Page):
 
 
         
-
+        # Botón de guardar tarea
         boton_guardar_tarea=ft.ElevatedButton(
             content=ft.Row(
                 controls=[
@@ -441,10 +500,11 @@ def admin_edit(page: ft.Page):
             ),
         )
         
+        # Inicializar tabla de voluntarios
         actualizar_tabla_voluntarios()
 
 
-
+        # Organización de elementos en la interfaz
         columna_tarea=ft.Column(controls=[label_tarea, edit_tarea],spacing=1)
         columna_ubicacion=ft.Column(controls=[label_ubicacion, edit_ubicacion],spacing=1)
         columna_turno=ft.Column(controls=[label_turno, lista_turnos],spacing=1)
@@ -493,11 +553,14 @@ def admin_edit(page: ft.Page):
 
 
     def para_atras(e): 
+        """
+        Maneja la navegación hacia atrás en la interfaz.
+        """
         set_selected_tab_index(1)        
         page.go("/admin")            
         
 
-        
+    # Configuración de elementos de navegación
     flecha=ft.IconButton(ft.icons.ARROW_BACK, tooltip="Atras", icon_color=ft.colors.BLUE_900, icon_size=30, on_click=para_atras)
     texto_atras=ft.Text(value="Atras", size=25, color=ft.colors.BLUE_900)
     atras=ft.Container(
@@ -516,9 +579,10 @@ def admin_edit(page: ft.Page):
 
 
 
-
+    # Montar contenido principal
     contenedor=montar_contenido_edit()
 
+    # Información de pie de página
     pie_info=ft.Container(
         content=ft.Text(value="Al modificar la fecha, el turno, cambiar campo coordinador \no al reducir voluntarios de una tarea, se borraran los voluntarios asignados",
                         size=18,
@@ -543,7 +607,7 @@ def admin_edit(page: ft.Page):
                     image_src=path_fondo,    
                     image_fit=ft.ImageFit.COVER,
                     image_opacity=0.2,
-                    #margin=ft.margin.only(top=50)  # La imagen comenzará 50px más abajo
+                    
                 ),
                 ft.Container(
                     content=contenedo,
@@ -554,19 +618,6 @@ def admin_edit(page: ft.Page):
             ]
         ),
         expand=True
-    )
-
-
-    
-    
-    
-    
-
-    
-
-    
-
-
-
+    )   
     
     return ft.View("/admin/edit", controls=[main_container])

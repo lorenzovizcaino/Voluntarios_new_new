@@ -1,28 +1,38 @@
+"""
+Módulo para el envío de correos electrónicos usando SMTP de Gmail.
+Proporciona una función simple para enviar correos con autenticación
+y manejo de errores.
+"""
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def enviar_correo(destinatario, asunto, mensaje):
     """
-    Envía un correo electrónico usando SMTP de Gmail.
+    Envía un correo electrónico usando el servidor SMTP de Gmail.
     
-    Parámetros:
-    remitente (str): Dirección de correo del remitente (Gmail)
-    contraseña (str): Contraseña de aplicación de Gmail
-    destinatario (str): Dirección de correo del destinatario
-    asunto (str): Asunto del correo
-    mensaje (str): Contenido del correo
+    Args:
+        destinatario (str): Dirección de correo electrónico del destinatario
+        asunto (str): Asunto del correo electrónico
+        mensaje (str): Contenido del correo en formato texto plano
+        
+    Efectos:
+        - Envía un correo electrónico a través de Gmail        
+        
+    Notas:
+        - Utiliza credenciales predefinidas para el remitente
+        - Requiere una contraseña de aplicación de Gmail
+        - Usa TLS para la conexión segura
     """
     # Configurar el mensaje
-    email = MIMEMultipart()
-    #email['From'] = "lorenzovizcaino@gmail.com"
+    email = MIMEMultipart()    
     email['From'] = "lorenzovizcaino74@gmail.com"
     email['To'] = destinatario
     email['Subject'] = asunto
-    #remitente = "lorenzovizcaino@gmail.com"
-    #contraseña="dpms ufyv ojcd lxar"
+    
 
-
+    # Credenciales de Gmail
     remitente = "lorenzovizcaino74@gmail.com"    
     contraseña="zctk lbdp uuib rafr"
     
