@@ -46,7 +46,7 @@ def main(page: ft.Page):
     Función principal que configura y maneja la interfaz gráfica de Flet.
     
     Args:
-        page (ft.Page): Objeto página principal de Flet
+        page (ft.Page): Objeto page principal de Flet
         
     La función configura el tema, maneja el enrutamiento entre vistas
     y establece la vista inicial.

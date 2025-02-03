@@ -17,7 +17,7 @@ def login(page: ft.Page):
     Función principal que implementa la vista de login.
     
     Args:
-        page (ft.Page): Objeto página de Flet
+        page (ft.Page): Objeto page de Flet
         
     Returns:
         ft.View: Vista de login configurada

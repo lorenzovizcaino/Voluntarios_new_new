@@ -1,19 +1,40 @@
+"""
+Módulo que implementa la vista de usuario del sistema.
+Proporciona funcionalidades para:
+- Visualización de tareas asignadas
+- Gestión de disponibilidad mediante diferentes vistas de calendario
+- Configuración de turnos y preferencias
+"""
+
 import os
 import flet as ft
 import requests
 import calendar
 from datetime import datetime, timedelta
 
-from utils import API_URL_TURNOS, get_id_usuario_logeado, API_URL_LOGIN, API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS, path_fondo
+from utils import (
+    API_URL_TURNOS, get_id_usuario_logeado, API_URL_LOGIN,
+    API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS, path_fondo
+)
 
 def user(page: ft.Page):
+    """
+    Implementa la vista principal del usuario.
+    
+    Args:
+        page (ft.Page): Objeto page de Flet
+        
+    Returns:
+        ft.View: Vista principal con pestañas para diferentes funcionalidades
+    """
+    # Configuración inicial de la ventana
     page.window_width = 1000
     page.window_height = 1000  
     page.window_center()
     page.bgcolor = ft.colors.TRANSPARENT
     page.window_bgcolor = ft.colors.TRANSPARENT
 
-    
+    # Variables de control para navegación entre meses
     comprobar_mes = 0
     comprobar_mes2 = 0
     comprobar_mes3 = 0
@@ -23,17 +44,20 @@ def user(page: ft.Page):
 
     
     
-    
+    # Elementos de interfaz para encabezados de calendario
     calendar_header = ft.Text("", weight="bold", size=30)
     calendar_header2 = ft.Text("", weight="bold", size=30)
     calendar_header3 = ft.Text("", weight="bold", size=30)
+
+    # Leyendas explicativas de turnos
     leyenda=ft.Text(value="T1: de 09:00 a 12:00       T2: de 12:00 a 15:00        T3: de 15:00 a 18:00        T4: de 18:00 a 21:00",
                         size=15,
                         weight=ft.FontWeight.BOLD)
     leyenda2=ft.Text(value="Turno 1: de 09:00 a 12:00       Turno 2: de 12:00 a 15:00        Turno 3: de 15:00 a 18:00        Turno 4: de 18:00 a 21:00",
                         size=15,
                         weight=ft.FontWeight.BOLD)
-
+    
+    # Diccionario para traducción de meses
     meses = {
                     'January': 'Enero',
                     'February': 'Febrero',
@@ -51,6 +75,16 @@ def user(page: ft.Page):
 
 
     def mostrar_mes():
+        """
+        Calcula y muestra el mes correspondiente según el índice actual.
+        
+        Returns:
+            datetime: Fecha del mes a mostrar
+            
+        Efectos:
+            - Actualiza el texto del encabezado del calendario
+        """
+
         nonlocal comprobar_mes        
         # Calcular el mes objetivo
         target_date = today.replace(day=1)
@@ -62,8 +96,7 @@ def user(page: ft.Page):
         mes=next_month.strftime('%B')
         anho=next_month.strftime('%Y')
         
-        calendar_header.value = f"{meses[mes]} {anho}"
-        #calendar_header2.value = f"{meses[mes]} {anho}"
+        calendar_header.value = f"{meses[mes]} {anho}"        
         return next_month
     
     
@@ -80,6 +113,17 @@ def user(page: ft.Page):
 
     
     def montar_calendario():
+        """
+        Construye la interfaz del calendario por día.
+        
+        Construye una cuadrícula que muestra:
+        - Encabezados de días de la semana
+        - Casillas para cada día del mes
+        - Checkboxes de turnos para cada día
+                
+        Efectos:
+            - Actualiza columna_calendario_disponibilidad con el nuevo calendario
+        """
         nonlocal comprobar_mes, calendar_header
         check_deshabilitado=False
         next_month = mostrar_mes()
@@ -99,7 +143,7 @@ def user(page: ft.Page):
         
         
         
-        
+        # Crear encabezado con días de la semana
         header_row = ft.Container(
             ft.Row(
                 [
@@ -142,7 +186,7 @@ def user(page: ft.Page):
                     spacing=2,
                 )         
                 
-                # Crear checkboxes
+                # Crear checkboxes de turnos
                 checkboxes = []            
                 if current_day.month == next_month.month:  
                     year = current_day.year
@@ -151,6 +195,7 @@ def user(page: ft.Page):
                                 
                     for ch in range(4):                                            
                         try:
+                            # Verificar estado del turno en la base de datos
                             params = {
                                 "user_id": get_id_usuario_logeado(),
                                 "year": year, 
@@ -181,7 +226,8 @@ def user(page: ft.Page):
                     alignment="center", 
                     spacing=2          
                 )              
-                                        
+
+                # Configurar texto del día                  
                 day_text = ft.Container(
                     ft.Text(
                         str(current_day.day) if current_day.month == next_month.month else "",
@@ -192,6 +238,7 @@ def user(page: ft.Page):
                     width=CELL_WIDTH,
                 )
                 
+                # Crear celda completa del día
                 day_cell = ft.Container(
                     content=ft.Column(
                         [
@@ -208,25 +255,12 @@ def user(page: ft.Page):
                     bgcolor="#eed8cc" if current_day.month == next_month.month else ft.colors.TRANSPARENT,
                     border_radius=5,
                     width=CELL_WIDTH,
-                    # shadow=[
-                    #     ft.BoxShadow(
-                    #         color=ft.colors.with_opacity(0.2, ft.colors.BLACK),
-                    #         offset=ft.Offset(0, -2),
-                    #         blur_radius=2,
-                    #         spread_radius=0
-                    #     ),
-                    #     ft.BoxShadow(
-                    #         color=ft.colors.with_opacity(0.2, ft.colors.BLACK),
-                    #         offset=ft.Offset(2, 0),
-                    #         blur_radius=2,
-                    #         spread_radius=0
-                    #     )
-                    # ] if current_day.month == next_month.month else None
+                    
                 )
                 
                 row_cells.append(day_cell)
                 
-            # Crear fila con ancho fijo y espaciado consistente
+            # Crear fila de la semana
             calendar_row = ft.Row(
                 row_cells, 
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -235,7 +269,7 @@ def user(page: ft.Page):
             )
             days_grid.append(calendar_row)
 
-        # Contenedor principal del calendario con alineación fija
+        # Contenedor principal del calendario
         calendar_container = ft.Container(
             content=ft.Column(
                 [
@@ -258,6 +292,17 @@ def user(page: ft.Page):
     
     
     def modificar_tabla(e):
+        """
+        Maneja los cambios en los checkboxes de disponibilidad.
+        
+        Args:
+            e: Evento del checkbox que incluye la información del día y turno modificado
+            
+        Efectos:
+            - Actualiza la disponibilidad en la base de datos
+            - Refresca todas las vistas de calendario
+        """
+
         if e and e.control and e.control.key:
             year = e.control.key["current_day"].year
             month = e.control.key["current_day"].month
@@ -294,13 +339,14 @@ def user(page: ft.Page):
 
     
     def actualizar_estado_botones():
-        # Actualizar estado de los botones según comprobar_mes
+        """Actualiza el estado habilitado/deshabilitado de los botones de navegación."""
         flecha_izquierda.content.disabled = comprobar_mes == 0
         flecha_derecha.content.disabled = comprobar_mes == 2
 
     
     
     def mes_menos(e):
+        """Navega al mes anterior si está permitido."""
         nonlocal comprobar_mes
         if comprobar_mes > 0:
             comprobar_mes -= 1
@@ -311,6 +357,7 @@ def user(page: ft.Page):
         page.update()
 
     def mes_mas(e):
+        """Navega al mes siguiente si está permitido."""
         nonlocal comprobar_mes
         if comprobar_mes < 2:
             comprobar_mes += 1    
@@ -320,7 +367,7 @@ def user(page: ft.Page):
         
         page.update()
 
-    
+    # Configuración de botones de navegación
     flecha_izquierda = ft.Container(
         content=ft.IconButton(
             icon=ft.icons.ARROW_CIRCLE_LEFT, 
@@ -362,6 +409,12 @@ def user(page: ft.Page):
 
 
     def obtener_nombre_usuario():
+        """
+        Obtiene el nombre del usuario actual desde la API.
+        
+        Returns:
+            str: Nombre de usuario o None si hay error
+        """
         try:
                 
             response=requests.get(f"{API_URL_LOGIN}/{get_id_usuario_logeado()}")
@@ -381,9 +434,16 @@ def user(page: ft.Page):
             return None
 
     def logout(e):
+        """Redirige a la página de login."""
         page.go("/login")
 
     def cargar_datos():
+        """
+        Carga las tareas asignadas al usuario actual.
+        
+        Returns:
+            list: Lista de tareas completas o None si hay error
+        """
         id_tareas_usuario=[]
         tareas_usuario=[]        
         #Se recuperan todas las tareas del usuario por su id
@@ -423,6 +483,10 @@ def user(page: ft.Page):
 
 
     def crear_tabla_tareas_usuarios():
+        """
+        Crea la tabla de tareas asignadas al usuario.
+        Actualiza lista_para_tabla con los datos obtenidos.
+        """
         lista_base_datos=cargar_datos()
         lista_para_tabla.clear()
         for tarea in lista_base_datos:
@@ -438,6 +502,10 @@ def user(page: ft.Page):
 
             
     def actualizar_tabla():
+        """
+        Actualiza la visualización de la tabla de tareas.
+        Limpia y reconstruye las filas con los datos actuales.
+        """
         data_table.rows.clear()
 
         for dato in lista_para_tabla:
@@ -496,7 +564,7 @@ def user(page: ft.Page):
 
 
 
-
+    # Configuración de elementos de interfaz para el encabezado
     usuario = ft.Text(value=obtener_nombre_usuario(), size=23, color=ft.colors.BLUE_800)
     icono_logout = ft.IconButton(icon=ft.icons.LOGOUT, icon_size=25, on_click=logout, icon_color=ft.colors.BLUE_800)
     fila_encabezado = ft.Row(
@@ -509,7 +577,7 @@ def user(page: ft.Page):
 
 
     
-
+    # Configuración de la tabla de datos
     data_table = ft.DataTable(    
             
         #bgcolor=ft.colors.with_opacity(0.8, "#eed8cc"),
@@ -609,6 +677,7 @@ def user(page: ft.Page):
         rows=[]
     )
 
+    # Contenedor para la tabla con scroll
     tabla_con_scroll = ft.ListView(
         controls=[data_table],
         expand=1,
@@ -617,8 +686,7 @@ def user(page: ft.Page):
 
     contenedor_tabla = ft.Container(
         content=tabla_con_scroll,
-        width=850,
-        #border=ft.border.all(1, ft.colors.TRANSPARENT),
+        width=850,        
         border_radius=8,
         padding=0,
         
@@ -628,6 +696,7 @@ def user(page: ft.Page):
 
     crear_tabla_tareas_usuarios()
 
+    # Columna principal para tareas asignadas
     columna_tareas_asignadas=ft.Column(controls=[
             
             fila_encabezado,  
@@ -646,6 +715,10 @@ def user(page: ft.Page):
 
 
     def mostrar_mes2():
+        """
+        Controla la visualización del mes para la vista de calendario por turnos.
+        Actualiza el encabezado con el mes y año correspondiente.
+        """
         nonlocal comprobar_mes2        
         # Calcular el mes objetivo
         target_date = today.replace(day=1)
@@ -660,13 +733,14 @@ def user(page: ft.Page):
         return next_month
 
     def actualizar_estado_botones2():
-        # Actualizar estado de los botones según comprobar_mes
+        """ Actualizar estado de los botones según comprobar_mes """
         flecha_izquierda2.content.disabled = comprobar_mes2 == 0
         flecha_derecha2.content.disabled = comprobar_mes2 == 2
 
     
     
     def mes_menos2(e):
+        """Navega al mes anterior si es posible."""
         nonlocal comprobar_mes2
         if comprobar_mes2 > 0:
             comprobar_mes2 -= 1
@@ -675,6 +749,7 @@ def user(page: ft.Page):
             page.update()
 
     def mes_mas2(e):
+        """Navega al mes siguiente si es posible."""
         nonlocal comprobar_mes2
         if comprobar_mes2 < 2:
             comprobar_mes2 += 1    
@@ -683,6 +758,16 @@ def user(page: ft.Page):
             page.update()
 
     def cambiar_turnos(e):
+        """
+        Gestiona cambios en los turnos para todo un mes.
+        
+        Args:
+            e: Evento del checkbox con información del turno seleccionado
+            
+        Efectos:
+            - Actualiza la disponibilidad para todo el mes en la base de datos
+            - Refresca todas las vistas de calendario
+        """
         user_id=get_id_usuario_logeado()
         month=mostrar_mes2().month
         year=mostrar_mes2().year
@@ -733,6 +818,13 @@ def user(page: ft.Page):
         
 
     def montar_calendario_por_turno():
+        """
+        Construye la interfaz de calendario por turnos.
+        Permite seleccionar disponibilidad para un turno específico en todo el mes.
+        
+        Returns:
+            ft.Container: Contenedor con la interfaz de turnos mensuales
+        """
         check_deshabilitado=False
         checkboxes = []
         user_id=get_id_usuario_logeado()
@@ -776,7 +868,7 @@ def user(page: ft.Page):
                         ))
         
         
-
+        # Crear filas para cada turno
         filas_turnos = [
             ft.Row(
                 controls=[
@@ -788,7 +880,7 @@ def user(page: ft.Page):
             ) for ch in range(1,5)
 ]
 
-        
+        # Contenedor principal de turnos
         fila_por_turnos = ft.Container(
             content=ft.Column(
                 controls=filas_turnos,
@@ -829,12 +921,8 @@ def user(page: ft.Page):
             ],
             
             expand=True
-        )
-
-
-
-       
-        #page.update()
+        )       
+        
         return contenedor_centrado
         
 
@@ -893,6 +981,7 @@ def user(page: ft.Page):
      #PESTAÑA CALENDARIO POR DIAS DE SEMANA
 
     def mostrar_mes3():
+        """Gestiona visualización del mes en vista por días de semana."""
         nonlocal comprobar_mes3        
         # Calcular el mes objetivo
         target_date = today.replace(day=1)
@@ -907,13 +996,14 @@ def user(page: ft.Page):
         return next_month
 
     def actualizar_estado_botones3():
-        # Actualizar estado de los botones según comprobar_mes
+        """Actualiza estado de botones de navegación semanal."""
         flecha_izquierda3.content.disabled = comprobar_mes3 == 0
         flecha_derecha3.content.disabled = comprobar_mes3 == 2
 
     
     
     def mes_menos3(e):
+        """Navega al mes anterior en vista semanal."""
         nonlocal comprobar_mes3
         if comprobar_mes3 > 0:
             comprobar_mes3 -= 1
@@ -922,6 +1012,7 @@ def user(page: ft.Page):
             page.update()
 
     def mes_mas3(e):
+        """Navega al mes siguiente en vista semanal."""
         nonlocal comprobar_mes3
         if comprobar_mes3 < 2:
             comprobar_mes3 += 1    
@@ -932,6 +1023,13 @@ def user(page: ft.Page):
     
     
     def montar_calendario_por_dias_semana():
+        """
+        Construye interfaz de calendario organizada por días de la semana.
+        Permite gestionar disponibilidad para todos los turnos de cada día.
+        
+        Returns:
+            ft.Container: Tabla con interfaz de días y turnos
+        """
         check_deshabilitado=False
         dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         turnos = ["Turno 1", "Turno 2", "Turno 3", "Turno 4"]
@@ -953,7 +1051,10 @@ def user(page: ft.Page):
             check_deshabilitado=True
         
         def on_checkbox_changed(e, dia_semana, ch):
-            
+            """
+            Maneja cambios en checkboxes individuales.
+            Actualiza disponibilidad para un turno específico en todos los días del tipo seleccionado.
+            """
             dias_modificar=[]
             _, num_dias = calendar.monthrange(year, month)
 
@@ -1010,13 +1111,12 @@ def user(page: ft.Page):
             page.update()
 
 
-        def on_checkbox_general_changed(e, dia_semana):          
+        def on_checkbox_general_changed(e, dia_semana):      
+            """Maneja cambios en checkboxes generales que afectan todos los turnos."""    
             for i in range (0,4):                
                 on_checkbox_changed(e,dia_semana,i)         
             
-            columna_de_tab3.controls[1] = montar_calendario_por_dias_semana()
-            
-            
+            columna_de_tab3.controls[1] = montar_calendario_por_dias_semana()        
             page.update()
 
         # Crear las columnas de la tabla primero
@@ -1082,6 +1182,8 @@ def user(page: ft.Page):
                 dias_modificar=dias_semana[dia]
                 
                 valor_check=True
+
+
                 for dia_modificar in dias_modificar:
                     try:
                         params = {
@@ -1127,7 +1229,7 @@ def user(page: ft.Page):
             valor_check_general=todos_checkbox              
             lista_estado_checkbox.clear()
             
-            #print(valor_check_general)
+            
 
             checkbox_general = ft.Checkbox(
                 scale=1.2,
@@ -1151,13 +1253,10 @@ def user(page: ft.Page):
         # Crear la tabla pasando las columnas en la inicialización
         table = ft.DataTable(
             columns=columns,
-            rows=rows,
-            
-            #bgcolor=ft.colors.with_opacity(0.8, ft.colors.GREEN_50),
+            rows=rows,            
             bgcolor="#eed8cc",
             border=ft.border.all(2, ft.colors.WHITE),
-            border_radius=8,
-            #vertical_lines=ft.border.BorderSide(1, ft.colors.GREY_200),
+            border_radius=8,            
             horizontal_lines=ft.border.BorderSide(2, ft.colors.WHITE),
             heading_row_height=50,
             data_row_min_height=50,
@@ -1219,8 +1318,11 @@ def user(page: ft.Page):
         )
 
      
-    #funcion para que recarge los calendarios actualizados al pulsar la pestaña correspondiente
+    
     def on_tabs_changed(e):
+        """
+        Maneja cambios entre pestañas, actualizando la vista correspondiente.
+        """
         index = e.control.selected_index
         if index == 0:
             mostrar_mes()
@@ -1240,7 +1342,7 @@ def user(page: ft.Page):
         page.update()         
 
 
-
+    # Configuración de pestañas principales
     tabs=ft.Tabs(
         selected_index=0,
         animation_duration=300,
@@ -1285,14 +1387,6 @@ def user(page: ft.Page):
             ]
         ),
         expand=True
-    )
-
-
+    )      
     
-    
-    
-
-
-        
-    #return ft.View("/user", controls=[tabs])
     return ft.View("/user", controls=[main_container])

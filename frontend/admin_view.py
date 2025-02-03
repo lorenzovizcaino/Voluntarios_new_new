@@ -39,7 +39,7 @@ def admin(page: ft.Page):
     Función principal que implementa la vista de administración.
     
     Args:
-        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+        page (ft.Page): Objeto page de Flet para la interfaz gráfica
         
     Returns:
         ft.View: Vista principal de administración

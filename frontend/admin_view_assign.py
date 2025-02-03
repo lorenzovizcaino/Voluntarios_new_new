@@ -27,7 +27,7 @@ def admin_assign(page: ft.Page):
     Función principal que configura la vista de asignación de tareas.
     
     Args:
-        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+        page (ft.Page): Objeto page de Flet para la interfaz gráfica
     """
     # Configuración inicial de la ventana
     page.window_width = 800

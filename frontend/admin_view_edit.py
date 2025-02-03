@@ -24,7 +24,7 @@ def admin_edit(page: ft.Page):
     Función principal que configura la vista de edición de tareas.
     
     Args:
-        page (ft.Page): Objeto página de Flet para la interfaz gráfica
+        page (ft.Page): Objeto page de Flet para la interfaz gráfica
     """
     # Configuración inicial de la ventana
 
