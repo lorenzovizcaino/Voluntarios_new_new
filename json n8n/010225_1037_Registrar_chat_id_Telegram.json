@@ -1,0 +1,225 @@
+{
+  "name": "Registrar chat_id Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1160,
+        200
+      ],
+      "id": "379cb3d1-213f-48d6-a2aa-9a9f9bc2e192",
+      "name": "Telegram Trigger",
+      "webhookId": "5552cb68-b01e-4cd9-b470-0f75d2b101c7",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZGiraWUpBbzNaAeD",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "El numero enviado es incorrecto o no esta registrado en nuestra base de datos",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -440,
+        280
+      ],
+      "id": "a5eab869-5550-4da9-b1c0-d89314da2dcf",
+      "name": "Telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZGiraWUpBbzNaAeD",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "database": "/db/voluntarios.db",
+        "operation": "executeQuery",
+        "query": "=SELECT user_id FROM datos_users WHERE telefono = '{{ $json.message.text }}'"
+      },
+      "type": "n8n-nodes-sqlite.sqlite",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        200
+      ],
+      "id": "1caa32cd-8cc3-48fa-ae1c-1ce1d3f2f983",
+      "name": "SQLite",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a4c77696-dad4-4e52-b386-6e4736ab7856",
+              "leftValue": "={{ $json.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -720,
+        200
+      ],
+      "id": "201c72ea-204c-4a3b-8c73-bb81745dc593",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Registrado correctamente, a partir de ahora recibirá el día anterior a una tarea un mensaje recordándole tarea, ubicación y horario de la misma. Gracias por su colaboración",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -160
+      ],
+      "id": "ac46b704-75e0-4552-b45f-7ba0003b24a1",
+      "name": "Telegram1",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZGiraWUpBbzNaAeD",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        300
+      ],
+      "id": "45d1c4ca-4567-4b24-8880-67ab29f5d1e9",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "database": "/db/voluntarios.db",
+        "operation": "executeQuery",
+        "query": "=UPDATE datos_users  SET chat_id = {{ $('Telegram Trigger').item.json.message.chat.id }}  WHERE user_id = {{ $json.user_id }};"
+      },
+      "type": "n8n-nodes-sqlite.sqlite",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        20
+      ],
+      "id": "82196595-6b11-44b9-8160-4b9357228458",
+      "name": "SQLite1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "SQLite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQLite": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "SQLite1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQLite1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0fb7ad5b-35ce-4625-88d2-6c1ebd5dfaef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1644090f2f7e9cd21ff3a35eaa0f9cc3c06433f5ae36727c2e2269e66e231ee3"
+  },
+  "id": "6oNPbNVfRdhn5C5F",
+  "tags": []
+}

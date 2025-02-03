@@ -1,0 +1,223 @@
+{
+  "name": "Avisos Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -420,
+        60
+      ],
+      "id": "f0e71ed9-564d-4848-baf7-36059c7f8d3f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "database": "/db/voluntarios.db",
+        "operation": "executeQuery",
+        "query": "SELECT id, year, month, day FROM tareas"
+      },
+      "type": "n8n-nodes-sqlite.sqlite",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -20
+      ],
+      "id": "581d6990-23f8-49df-87c3-b16b5510ffa4",
+      "name": "Todas las tareas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Código para el nodo Code de n8n\nlet matchingIds = [];\n\n// Obtener la fecha actual y calcular mañana\nconst currentDate = new Date();\nconst tomorrow = new Date(currentDate);\ntomorrow.setDate(currentDate.getDate() + 1);\n// Resetear las horas para comparar solo fechas\ntomorrow.setHours(0, 0, 0, 0);\n\n// Procesar cada item\nfor (const item of items) {\n    const { id, year, month, day } = item.json;\n    \n    // Crear fecha a partir de los campos\n    const dateToCheck = new Date(year, month - 1, day); // Se resta 1 al mes porque en JS los meses van de 0-11\n    // Resetear las horas para comparar solo fechas\n    dateToCheck.setHours(0, 0, 0, 0);\n    \n    // Comparar si la fecha es mañana\n    if (dateToCheck.getTime() === tomorrow.getTime()) {\n        matchingIds.push(id);\n    }\n}\n\n// Crear el string con el formato requerido\nconst resultString = `(${matchingIds.join(',')})`;\n\n// Devolver un array con un objeto que tiene una propiedad 'json' que contiene un objeto\nreturn [{\n    json: {\n        data: resultString\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        100
+      ],
+      "id": "c76ce10d-ab9e-4f9b-b826-084113ed8407",
+      "name": "obtener tareas de mañana"
+    },
+    {
+      "parameters": {
+        "database": "/db/voluntarios.db",
+        "operation": "executeQuery",
+        "query": "=SELECT id, tarea_name, tarea_ubicacion, year, month, day, turno, id_voluntario_Asignado_1, id_voluntario_Asignado_2, id_voluntario_Asignado_3, id_voluntario_Asignado_4, id_voluntario_Asignado_5 FROM tareas WHERE id IN {{ $json.data }}"
+      },
+      "type": "n8n-nodes-sqlite.sqlite",
+      "typeVersion": 1,
+      "position": [
+        380,
+        20
+      ],
+      "id": "677b2dd2-6509-4e3c-aed0-1f74f08f38ec",
+      "name": "Datos tarea mañana"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Entrada: los items que llegan al node\n// Salida: un array con los items procesados\nconst valoresUnicos = new Set();\n\n// Procesar todos los items\nitems.forEach(item => {\n    // Campos a procesar (id_voluntario_Asignado_1 hasta id_voluntario_Asignado_5)\n    for (let i = 1; i <= 5; i++) {\n        const valor = item.json[`id_voluntario_Asignado_${i}`];\n        if (valor !== null && valor !== undefined) {\n            valoresUnicos.add(valor);\n        }\n    }\n});\n\n// Crear el string con el formato requerido\nconst resultado = `(${Array.from(valoresUnicos).join(',')})`;\n\n// Devolver un solo item con el resultado\nreturn [{\n    json: {\n        resultado: resultado\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        140
+      ],
+      "id": "ddb76bff-a27e-4b17-8f88-b9499ebc16be",
+      "name": "Id voluntarios a avisar"
+    },
+    {
+      "parameters": {
+        "database": "/db/voluntarios.db",
+        "operation": "executeQuery",
+        "query": "=SELECT id, chat_id FROM datos_users WHERE id IN  {{ $json.resultado }}"
+      },
+      "type": "n8n-nodes-sqlite.sqlite",
+      "typeVersion": 1,
+      "position": [
+        900,
+        20
+      ],
+      "id": "d2bc8f03-e3c2-4441-b4d9-0b78f4c1ec2b",
+      "name": "Telefonos de usuarios a avisar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tareasData = $('Datos tarea mañana').all();\nconst voluntariosData = $input.all();\n\n// Función para formatear la fecha\nfunction formatearFecha(year, month, day) {\n    return `${day}/${month}/${year}`;\n}\n\n// Función para obtener el teléfono de un voluntario por su ID\nfunction obtenerChatIdVoluntario(voluntarioId, voluntarios) {\n    const voluntario = voluntarios.find(v => v.id === parseInt(voluntarioId));\n    return voluntario ? voluntario.chat_id : null;\n}\n\n// Array para almacenar el resultado final\nlet resultado = [];\n\n// Procesar cada tarea\ntareasData.forEach(item => {\n    const tarea = item.json;\n    \n    // Array de IDs de voluntarios asignados (excluyendo null)\n    const voluntariosAsignados = [\n        tarea.id_voluntario_Asignado_1,\n        tarea.id_voluntario_Asignado_2,\n        tarea.id_voluntario_Asignado_3,\n        tarea.id_voluntario_Asignado_4,\n        tarea.id_voluntario_Asignado_5\n    ].filter(id => id !== null);\n\n    // Crear un registro por cada voluntario asignado\n    voluntariosAsignados.forEach(voluntarioId => {\n        const chat_id = obtenerChatIdVoluntario(voluntarioId, voluntariosData.map(v => v.json));\n        if (chat_id) {\n            resultado.push({\n                json: {\n                    id_tarea: tarea.id,\n                    nombre_tarea: tarea.tarea_name,\n                    ubicacion_tarea: tarea.tarea_ubicacion,\n                    fecha: formatearFecha(tarea.year, tarea.month, tarea.day),\n                    turno: tarea.turno,  // Ya no añadimos la comilla extra\n                    voluntario: {\n                        id: parseInt(voluntarioId),\n                        chat_id: chat_id\n                    }\n                }\n            });\n        }\n    });\n});\n\n// Retornar el resultado\nreturn resultado;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        160
+      ],
+      "id": "ef52d82d-87f7-4464-801c-ba7464bed7d7",
+      "name": "Crear JSON final con todos los datos necesarios",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.voluntario.chat_id }}",
+        "text": "=Estimado Voluntario:\nLe comunico que mañana {{ $json.fecha }} tiene usted asignada\nla tarea: {{ $json.nombre_tarea }}\nUbicada en: {{ $json.ubicacion_tarea }}\nTurno: {{ $json.turno }}\nMuchas gracias por su colaboracion",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        160
+      ],
+      "id": "cabf3196-4b1e-4164-bdcf-8fdd8ec3416e",
+      "name": "Telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZGiraWUpBbzNaAeD",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Todas las tareas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todas las tareas": {
+      "main": [
+        [
+          {
+            "node": "obtener tareas de mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener tareas de mañana": {
+      "main": [
+        [
+          {
+            "node": "Datos tarea mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos tarea mañana": {
+      "main": [
+        [
+          {
+            "node": "Id voluntarios a avisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Id voluntarios a avisar": {
+      "main": [
+        [
+          {
+            "node": "Telefonos de usuarios a avisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telefonos de usuarios a avisar": {
+      "main": [
+        [
+          {
+            "node": "Crear JSON final con todos los datos necesarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear JSON final con todos los datos necesarios": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b3d3907d-5634-4d3e-9a03-b274fb55dd5b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1644090f2f7e9cd21ff3a35eaa0f9cc3c06433f5ae36727c2e2269e66e231ee3"
+  },
+  "id": "ddE8Cty5CfEEyxOY",
+  "tags": []
+}
