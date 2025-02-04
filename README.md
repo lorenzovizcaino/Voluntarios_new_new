@@ -37,7 +37,7 @@ Aplicación integral de gestión de voluntariado diseñada para optimizar la coo
 
 - Ejecutar el archivo python app.py ubicado en el directorio frontend
   <p align="center">
-    <img src="/images_md/login.png" width="400" alt="Captura del login">
+    <img src="/images_md/login.png" width="300" alt="Captura del login">
   </p>
 - Usuarios de prueba creados:
   - Administradores:
