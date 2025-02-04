@@ -12,15 +12,15 @@ Aplicación integral de gestión de voluntariado diseñada para optimizar la coo
   - Especificar detalles de tareas: nombre, ubicación, fecha, turno, voluntarios necesarios
   - Sistema de asignación manual y automática de voluntarios
   <p align="center">
-    <img src="/images_md/admin1.png" width="400" alt="Captura modo administrador 1">
+    <img src="/images_md/admin1.png" width="600" alt="Captura modo administrador 1">
   </p>
 
   <p align="center">
-    <img src="/images_md/admin2.png" width="400" alt="Captura modo administrador 2">
+    <img src="/images_md/admin2.png" width="600" alt="Captura modo administrador 2">
   </p>
 
   <p align="center">
-    <img src="/images_md/admin3.png" width="400" alt="Captura modo administrador 3">
+    <img src="/images_md/admin3.png" width="600" alt="Captura modo administrador 3">
   </p>
 
 ### Interfaz de Usuario de Voluntarios
@@ -31,19 +31,19 @@ Aplicación integral de gestión de voluntariado diseñada para optimizar la coo
   - Selección de turno mensual
   
   <p align="center">
-    <img src="/images_md/user_tareas.png" width="400" alt="Captura modo usuario 1">
+    <img src="/images_md/user_tareas.png" width="600" alt="Captura modo usuario 1">
   </p>
 
   <p align="center">
-    <img src="/images_md/user_calendario_por_dia.png" width="400" alt="Captura modo usuario 2">
+    <img src="/images_md/user_calendario_por_dia.png" width="600" alt="Captura modo usuario 2">
   </p>
 
   <p align="center">
-    <img src="/images_md/user_calendario_por_turno.png" width="400" alt="Captura modo usuario 3">
+    <img src="/images_md/user_calendario_por_turno.png" width="600" alt="Captura modo usuario 3">
   </p>
 
   <p align="center">
-    <img src="/images_md/user_calendario_por_semana.png" width="400" alt="Captura modo usuario 4">
+    <img src="/images_md/user_calendario_por_semana.png" width="600" alt="Captura modo usuario 4">
   </p>
 
 ## Objetivos del Proyecto
