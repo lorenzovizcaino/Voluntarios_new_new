@@ -56,7 +56,7 @@ Característica destacada: Notificaciones personalizadas con n8n
 
 #### Cómo Funcionan las Notificaciones
 1. El sistema genera un listado de tareas próximas
-2. N8N procesa la información y programa las notificaciones
+2. n8n procesa la información y programa las notificaciones
 3. Se envía un mensaje personalizado a través de Telegram
 4. El voluntario recibe un recordatorio con detalles de la tarea
 
@@ -105,6 +105,7 @@ Característica destacada: Notificaciones personalizadas con n8n
     - usuario: antia, password: 123
     - usuario: user4, password: 123
     - usuario: user5, password: 123
+  - Se adjuntan los archivos JSON necesarios para la automatización con n8n en la carpeta "json n8n"
 
 ## Hoja de Ruta Futura
 
