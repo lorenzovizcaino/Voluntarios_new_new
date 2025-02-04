@@ -46,6 +46,33 @@ Aplicación integral de gestión de voluntariado diseñada para optimizar la coo
     <img src="/images_md/user_calendario_por_semana.png" width="600" alt="Captura modo usuario 4">
   </p>
 
+### Notificaciones Automáticas con Telegram
+Característica destacada: Notificaciones personalizadas con n8n
+
+- Automatización de recordatorios de tareas
+- Notificaciones enviadas un día antes de la tarea programada
+- Integración con Telegram para comunicaciones instantáneas
+- Los voluntarios pueden optar por recibir o no estas notificaciones
+
+#### Cómo Funcionan las Notificaciones
+1. El sistema genera un listado de tareas próximas
+2. N8N procesa la información y programa las notificaciones
+3. Se envía un mensaje personalizado a través de Telegram
+4. El voluntario recibe un recordatorio con detalles de la tarea
+
+#### Beneficios
+- Reducción del olvido de tareas
+- Comunicación proactiva
+- Mayor compromiso de los voluntarios
+- Flexibilidad para el usuario (se pueden activar o no)
+
+## Stack Tecnológico
+- **Lenguaje de Backend**: Python
+- **Framework de UI**: Flet (Multiplataforma)
+- **Base de Datos**: SQLite
+- **Automatización de Flujos**: N8N
+- **Comunicación**: Telegram, Email, Notificaciones Windows
+
 ## Objetivos del Proyecto
 
 - Centralizar información de voluntarios y tareas
