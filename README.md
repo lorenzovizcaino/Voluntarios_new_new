@@ -32,6 +32,19 @@ Aplicación integral de gestión de voluntariado diseñada para optimizar la coo
 - Mejorar la eficiencia de comunicación
 - Optimizar la asignación de recursos humanos
 - Mejorar la experiencia de los voluntarios
+  
+## Despliegue
+
+- Ejecutar el archivo python app.py ubicado en el directorio frontend
+- Usuarios de prueba creados:
+  - Administradores:
+    - usuario: admin, password: admin
+  - Voluntarios:
+    - usuario: antonio, password: 123
+    - usuario: remi, password: 123
+    - usuario: antia, password: 123
+    - usuario: user4, password: 123
+    - usuario: user5, password: 123
 
 ## Hoja de Ruta Futura
 
