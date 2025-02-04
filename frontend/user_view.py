@@ -56,6 +56,10 @@ def user(page: ft.Page):
     leyenda2=ft.Text(value="Turno 1: de 09:00 a 12:00       Turno 2: de 12:00 a 15:00        Turno 3: de 15:00 a 18:00        Turno 4: de 18:00 a 21:00",
                         size=15,
                         weight=ft.FontWeight.BOLD)
+    leyendaTelegram=ft.Text(value='Si quiere recibir un mensaje el dia anterior a una tarea: buscar en Telegram el canal  "Voluntarios", ponga su telefono y envie',
+                        size=14,
+                        color="GREEN",
+                        weight=ft.FontWeight.BOLD)
     
     # Diccionario para traducción de meses
     meses = {
@@ -702,8 +706,9 @@ def user(page: ft.Page):
             fila_encabezado,  
             ft.Container(height=80),           
             contenedor_tabla, 
-            ft.Container(height=280),
+            ft.Container(height=240),
             leyenda2,
+            leyendaTelegram,
             
             ],
         alignment=ft.MainAxisAlignment.START,
