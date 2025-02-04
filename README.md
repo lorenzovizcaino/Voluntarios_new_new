@@ -89,6 +89,7 @@ Característica destacada: Notificaciones personalizadas con n8n
   
 ## Despliegue
 
+- Levantar el servicio con Docker (solo necesario para las notificaciones de Telegram)
 - Ejecutar el archivo python app.py ubicado en el directorio frontend
   <p align="center">
     <img src="/images_md/login.png" width="300" alt="Captura del login">
