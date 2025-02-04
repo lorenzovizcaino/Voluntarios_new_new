@@ -72,7 +72,7 @@ Característica destacada: Notificaciones personalizadas con n8n
 - **Framework de UI**: Flet (Multiplataforma)
 - **Base de Datos**: SQLite
 - **Contenedorización**: Docker
-- **Automatización de Flujos**: N8N
+- **Automatización de Flujos**: n8n
 - **Comunicación**: Telegram, Email, Notificaciones Windows
 
 ## Objetivos del Proyecto
@@ -113,7 +113,7 @@ Característica destacada: Notificaciones personalizadas con n8n
 - Posibles mejoras de características
 - Mejora continua de algoritmos de asignación
 
-## Contribuidores
+## Desarrollador
 
 Manuel Antonio Lorenzo Vizcaíno
 
