@@ -105,7 +105,7 @@ Característica destacada: Notificaciones personalizadas con n8n
     - usuario: antia, password: 123
     - usuario: user4, password: 123
     - usuario: user5, password: 123
-  - Se adjuntan los archivos JSON necesarios para la automatización con n8n en la carpeta "json n8n"
+- Se adjuntan los archivos JSON necesarios para la automatización con n8n en la carpeta "json n8n"
 
 ## Hoja de Ruta Futura
 
