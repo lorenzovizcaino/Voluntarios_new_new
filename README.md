@@ -68,8 +68,10 @@ Característica destacada: Notificaciones personalizadas con n8n
 
 ## Stack Tecnológico
 - **Lenguaje de Backend**: Python
+- **Framework de API**: FastAPI
 - **Framework de UI**: Flet (Multiplataforma)
 - **Base de Datos**: SQLite
+- **Contenedorización**: Docker
 - **Automatización de Flujos**: N8N
 - **Comunicación**: Telegram, Email, Notificaciones Windows
 
