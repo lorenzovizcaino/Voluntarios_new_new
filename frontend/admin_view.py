@@ -1289,6 +1289,10 @@ def admin(page: ft.Page):
 
 
     crear_lista_tabla()
+    #fin pestaña asignar tareas
+
+
+    
 
 
     # Configuración de pestañas
@@ -1298,7 +1302,8 @@ def admin(page: ft.Page):
         
         tabs=[
             ft.Tab(text="Crear Tareas", icon=ft.icons.LIST_ALT, content=crear_tareas),
-            ft.Tab(text="Asignar Tareas", icon=ft.icons.PERSON, content=contenido_asignar_tareas),
+            ft.Tab(text="Asignar Tareas", icon=ft.icons.ASSIGNMENT_IND_SHARP, content=contenido_asignar_tareas),
+           
         ],
         expand=1,
 
