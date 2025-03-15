@@ -158,19 +158,21 @@ def guardar_notificacion(user_id, tarea_data, alta_baja_tarea):
         if alta_baja_tarea:
             notification_data = {
                 "title": "Nueva tarea de voluntariado asignada:",
-                "message": f"""Tarea: {tarea_data['tarea_name']}
-                                Ubicación: {tarea_data['tarea_ubicacion']}
-                                Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
-                                Turno: {tarea_data['turno']}"""
+                "message": f"Tarea: {tarea_data['tarea_name']}\n"
+                           f"Ubicación: {tarea_data['tarea_ubicacion']}\n"
+                           f"Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}\n"
+                           f"Turno: {tarea_data['turno']}"
             }
         else:
+            
             notification_data = {
                 "title": "Se ha cancelado o modificado la tarea:",
-                "message": f"""Tarea: {tarea_data['tarea_name']}
-                                Ubicación: {tarea_data['tarea_ubicacion']}
-                                Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}
-                                Turno: {tarea_data['turno']}"""
+                "message": f"Tarea: {tarea_data['tarea_name']}\n"
+                           f"Ubicación: {tarea_data['tarea_ubicacion']}\n"
+                           f"Fecha: {tarea_data['day']}/{tarea_data['month']}/{tarea_data['year']}\n"
+                           f"Turno: {tarea_data['turno']}"
             }
+
         
         # Cargar notificaciones existentes o crear nueva lista
         if notification_file.exists():
