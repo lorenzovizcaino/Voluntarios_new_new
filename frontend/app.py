@@ -51,7 +51,7 @@ def main(page: ft.Page):
     La función configura el tema, maneja el enrutamiento entre vistas
     y establece la vista inicial.
     """
-    page.title = "Voluntarios"
+    page.title = "RedAyuda"
     page.theme_mode = ft.ThemeMode.LIGHT
 
     def cambiar_ruta(route):

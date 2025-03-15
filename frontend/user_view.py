@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 
 from utils import (
     API_URL_TURNOS, get_id_usuario_logeado, API_URL_LOGIN,
-    API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS, path_fondo
+    API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS, path_fondo,
+    obtener_nombre_usuario
 )
 
 def user(page: ft.Page):
@@ -41,6 +42,25 @@ def user(page: ft.Page):
     today = datetime.now()
     valor_checkbox = False
     lista_estado_checkbox=[]
+
+    def logout(e):
+        """Redirige a la página de login."""
+        page.go("/login")
+
+    titulo=ft.Text(value="Turnos Voluntarios", size=24, color=ft.colors.BLACK)
+    usuario = ft.Text(value=obtener_nombre_usuario(), size=23, color=ft.colors.BLUE_800)
+    icono_salir = ft.IconButton(icon=ft.icons.LOGOUT, icon_size=25, on_click=logout, icon_color=ft.colors.BLUE_800)
+    fila_encabezado = ft.Row(
+        controls=[
+            ft.Container(titulo, expand=True),  # Expande el título a la izquierda
+            ft.Row(
+                controls=[usuario, icono_salir], 
+                alignment=ft.MainAxisAlignment.END  # Alinea a la derecha
+            )
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,  # Mantiene el layout ordenado
+        vertical_alignment=ft.CrossAxisAlignment.START  # Alinea arriba
+    )
 
     
     
@@ -412,34 +432,11 @@ def user(page: ft.Page):
     #CONTENIDO DE LA PESTAÑA VER TAREAS
 
 
-    def obtener_nombre_usuario():
-        """
-        Obtiene el nombre del usuario actual desde la API.
-        
-        Returns:
-            str: Nombre de usuario o None si hay error
-        """
-        try:
-                
-            response=requests.get(f"{API_URL_LOGIN}/{get_id_usuario_logeado()}")
-            if response.status_code==200:                    
-                data = response.json()
-                nombre_usuario_logeado=data["username"]
-                return nombre_usuario_logeado
-                
+    
 
-                
-            else:
-                print(f"Error al obtener datos: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"Error en la conexión: {str(e)}")
-            return None
-
-    def logout(e):
-        """Redirige a la página de login."""
-        page.go("/login")
+    # def logout(e):
+    #     """Redirige a la página de login."""
+    #     page.go("/login")
 
     def cargar_datos():
         """
@@ -569,13 +566,13 @@ def user(page: ft.Page):
 
 
     # Configuración de elementos de interfaz para el encabezado
-    usuario = ft.Text(value=obtener_nombre_usuario(), size=23, color=ft.colors.BLUE_800)
-    icono_logout = ft.IconButton(icon=ft.icons.LOGOUT, icon_size=25, on_click=logout, icon_color=ft.colors.BLUE_800)
-    fila_encabezado = ft.Row(
-        controls=[usuario, icono_logout],
-        alignment=ft.MainAxisAlignment.END,  # Alinea horizontalmente a la derecha
-        vertical_alignment=ft.CrossAxisAlignment.START  # Alinea verticalmente arriba
-    )
+    # usuario = ft.Text(value=obtener_nombre_usuario(), size=23, color=ft.colors.BLUE_800)
+    # icono_logout = ft.IconButton(icon=ft.icons.LOGOUT, icon_size=25, on_click=logout, icon_color=ft.colors.BLUE_800)
+    # fila_encabezado = ft.Row(
+    #     controls=[usuario, icono_logout],
+    #     alignment=ft.MainAxisAlignment.END,  # Alinea horizontalmente a la derecha
+    #     vertical_alignment=ft.CrossAxisAlignment.START  # Alinea verticalmente arriba
+    # )
 
 
 
@@ -703,7 +700,7 @@ def user(page: ft.Page):
     # Columna principal para tareas asignadas
     columna_tareas_asignadas=ft.Column(controls=[
             
-            fila_encabezado,  
+            
             ft.Container(height=80),           
             contenedor_tabla, 
             ft.Container(height=240),
@@ -1394,4 +1391,4 @@ def user(page: ft.Page):
         expand=True
     )      
     
-    return ft.View("/user", controls=[main_container])
+    return ft.View("/user", controls=[fila_encabezado,main_container])

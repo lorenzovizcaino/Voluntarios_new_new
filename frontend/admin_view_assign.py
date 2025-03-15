@@ -33,7 +33,7 @@ def admin_assign(page: ft.Page):
     page.window_width = 800
     page.window_height = 900  
     page.window_center()    
-    page.title="Tareas de Voluntariado"
+    page.title="RedAyuda"
     page.horizontal_alignment=ft.CrossAxisAlignment.CENTER
 
     # Variables de control

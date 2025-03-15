@@ -48,6 +48,44 @@ def get_id_usuario_logeado():
     """
     return id_usuario_logeado
 
+
+
+def obtener_nombre_usuario():
+        """
+        Obtiene el nombre del usuario actual desde la API.
+        
+        Returns:
+            str: Nombre de usuario o None si hay error
+        """
+        try:
+                
+            response=requests.get(f"{API_URL_LOGIN}/{get_id_usuario_logeado()}")
+            if response.status_code==200:                    
+                data = response.json()
+                nombre_usuario_logeado=data["username"]
+                return nombre_usuario_logeado
+                
+
+                
+            else:
+                print(f"Error al obtener datos: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"Error en la conexión: {str(e)}")
+            return None
+
+
+
+
+
+
+
+
+
+
+
+
 def set_selected_tab_index(index):
     """
     Establece el índice de la pestaña seleccionada en la vista de admin.

@@ -5,6 +5,7 @@ incluyendo asignación automática y gestión de voluntarios.
 """
 
 from datetime import datetime
+import sys
 import os
 import flet as ft
 import requests
@@ -15,7 +16,7 @@ from utils import (
     API_URL_TAREAS, guardar_notificacion, get_id_usuario_logeado, API_URL_LOGIN,
     API_URL_TAREAS_ASIGNADAS, API_URL_TAREAS_EDIT_COORDINADOR, API_URL_DATOS_USER,
     API_URL_TURNOS_DISPONIBLES, API_URL_USERS_ASIGNADOS, API_URL_LOGIN_DATOS,
-    get_selected_tab_index, path_fondo, obtener_tarea_completa
+    get_selected_tab_index, path_fondo, obtener_tarea_completa, obtener_nombre_usuario
 )
 from enviar_email import enviar_correo
 
@@ -50,12 +51,37 @@ def admin(page: ft.Page):
     page.window_center()
     page.bgcolor = ft.colors.TRANSPARENT
     page.window_bgcolor = ft.colors.TRANSPARENT    
-    page.title="Tareas de Voluntariado"
+    page.title="RedAyuda"
     page.horizontal_alignment=ft.CrossAxisAlignment.CENTER
 
-    # Variables de control
+    def salir(e):
+        """Sale de la aplicacion"""        
+        page.window_close()
+
+
+
+    
     fecha_info = ft.Text(size=16)
     titulo=ft.Text(value="Tareas de Voluntariado", size=24, color=ft.colors.BLACK)
+
+
+    usuario = ft.Text(value=obtener_nombre_usuario(), size=23, color=ft.colors.BLUE_800)
+    icono_salir = ft.IconButton(icon=ft.icons.LOGOUT, icon_size=25, on_click=salir, icon_color=ft.colors.BLUE_800)
+    fila_encabezado = ft.Row(
+        controls=[
+            ft.Container(titulo, expand=True),  # Expande el título a la izquierda
+            ft.Row(
+                controls=[usuario, icono_salir], 
+                alignment=ft.MainAxisAlignment.END  # Alinea a la derecha
+            )
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,  # Mantiene el layout ordenado
+        vertical_alignment=ft.CrossAxisAlignment.START  # Alinea arriba
+    )
+    
+
+
+    # Variables de control
     year_seleccionado=None
     month_seleccionado=None
     day_seleccionado=None
@@ -1332,4 +1358,4 @@ def admin(page: ft.Page):
     )
 
 
-    return ft.View("/admin", controls=[titulo,main_container])
+    return ft.View("/admin", controls=[fila_encabezado,main_container])
