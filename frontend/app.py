@@ -85,6 +85,12 @@ def main(page: ft.Page):
 if __name__ == "__main__":
     # Iniciar FastAPI en un thread separado para que corra en paralelo
     # con la interfaz gráfica
+
+    #para ver y probar los endpoints de FastApi:
+    # http://127.0.0.1:8000/docs
+    
+    #para ver la documentacion de FastApi:
+    #con la aplicacion ejecutada, http://127.0.0.1:8000/redoc
     import threading
     api_thread = threading.Thread(
         target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000)
